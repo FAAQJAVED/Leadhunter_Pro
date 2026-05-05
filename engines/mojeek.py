@@ -12,7 +12,7 @@ Confirmed working selectors:
 from __future__ import annotations
 
 import logging
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus
 
 from bs4 import BeautifulSoup
 

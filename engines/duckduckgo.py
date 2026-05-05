@@ -28,7 +28,7 @@ a permanent block — we log it clearly and do NOT set is_banned=True.
 from __future__ import annotations
 
 import logging
-from urllib.parse import unquote, urlparse, parse_qs
+from urllib.parse import parse_qs, unquote, urlparse
 
 from bs4 import BeautifulSoup
 

@@ -11,7 +11,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from config import CHECKPOINT_FILE, CHECKPOINT_DIR, CHECKPOINT_EVERY
+from config import CHECKPOINT_DIR, CHECKPOINT_EVERY, CHECKPOINT_FILE
 
 logger = logging.getLogger('lead_engine.query_manager')
 
@@ -27,7 +27,7 @@ class QueryManager:
     Persists state to the checkpoint system (via CheckpointStore).
     """
 
-    def __init__(self, checkpoint: 'CheckpointStore') -> None:
+    def __init__(self, checkpoint: CheckpointStore) -> None:
         self._checkpoint = checkpoint
         self._all_queries: list[str] = []
 

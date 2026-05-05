@@ -16,10 +16,9 @@ set_active_bar(bar) — called by pass runners when a tqdm bar is live.
 from __future__ import annotations
 
 import time
-from typing import Optional
 
 _start_time: float = time.time()
-_active_bar: Optional[object] = None
+_active_bar: object | None = None
 
 
 def set_start_time(t: float) -> None:
@@ -28,7 +27,7 @@ def set_start_time(t: float) -> None:
     _start_time = t
 
 
-def set_active_bar(bar: Optional[object]) -> None:
+def set_active_bar(bar: object | None) -> None:
     """
     Register (or clear) the active tqdm progress bar.
 

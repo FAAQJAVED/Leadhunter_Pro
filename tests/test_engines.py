@@ -28,10 +28,10 @@ from unittest.mock import MagicMock
 from bs4 import BeautifulSoup
 
 from engine_base import SearchResult, _extract_base_domain
-from engines.mojeek import MojeekEngine
-from engines.duckduckgo import DuckDuckGoEngine
-from engines.yahoo import YahooEngine, _extract_yahoo_url, _clean_yahoo_title
 from engines.bing import BingEngine, _is_english_result
+from engines.duckduckgo import DuckDuckGoEngine
+from engines.mojeek import MojeekEngine
+from engines.yahoo import YahooEngine, _clean_yahoo_title, _extract_yahoo_url
 
 
 def _make_client():

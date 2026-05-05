@@ -16,8 +16,6 @@ from __future__ import annotations
 
 import html as html_module
 import re
-from typing import List, Set
-
 
 # ---------------------------------------------------------------------------
 # Placeholder domain and local-part blocklists — rejects template/filler addresses
@@ -38,7 +36,7 @@ _PLACEHOLDER_LOCALS = frozenset({
 })
 
 
-def extract_emails_raw(html: str) -> List[str]:
+def extract_emails_raw(html: str) -> list[str]:
     """
     Extract plaintext email addresses from HTML using a permissive regex.
 
@@ -54,7 +52,7 @@ def extract_emails_raw(html: str) -> List[str]:
     Returns a deduplicated list of lowercased email strings.
     """
     raw = re.findall(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}", html)
-    result: List[str] = []
+    result: list[str] = []
     for e in raw:
         e = e.lower().strip().strip('.,;"\'')
 
@@ -115,7 +113,7 @@ def decode_cloudflare_email(encoded: str) -> str:
         return ""
 
 
-def extract_emails_full(html: str) -> List[str]:
+def extract_emails_full(html: str) -> list[str]:
     """
     Extract all email addresses from HTML, including Cloudflare-obfuscated ones.
 
@@ -148,7 +146,7 @@ def extract_emails_full(html: str) -> List[str]:
     return list(set(emails))
 
 
-def extract_phones(html: str) -> List[str]:
+def extract_phones(html: str) -> list[str]:
     """
     Extract phone numbers from HTML.
 
@@ -169,8 +167,8 @@ def extract_phones(html: str) -> List[str]:
     # Decode HTML entities before extraction (e.g. &#x2B;44 → +44)
     html_str = html_module.unescape(html)
 
-    seen_digits: Set[str] = set()
-    phones: List[str] = []
+    seen_digits: set[str] = set()
+    phones: list[str] = []
 
     def _add(raw: str) -> None:
         """
@@ -237,14 +235,18 @@ def score_email(email: str, cfg: dict) -> int:
     generic_kws  = set(cfg.get("generic_email_keywords", []))
     junk_domains = set(cfg.get("junk_email_domains",     []))
 
-    if any(k in local  for k in skip_kws):     return 999
-    if any(j in domain for j in junk_domains): return 999
-    if not any(k in local for k in generic_kws): return 1
-    if local in {"info", "hello", "contact", "enquiries", "enquiry"}: return 2
+    if any(k in local for k in skip_kws):
+        return 999
+    if any(j in domain for j in junk_domains):
+        return 999
+    if not any(k in local for k in generic_kws):
+        return 1
+    if local in {"info", "hello", "contact", "enquiries", "enquiry"}:
+        return 2
     return 3
 
 
-def best_email(emails: List[str], cfg: dict) -> str:
+def best_email(emails: list[str], cfg: dict) -> str:
     """
     Return the single highest-quality email from a list.
 

@@ -3,7 +3,9 @@ tests/test_relevance.py — Lead quality scoring tests (CHANGE 5).
 Runs with: python -m unittest discover  AND  pytest tests/
 """
 from __future__ import annotations
+
 import unittest
+
 from core.relevance import score_relevance
 
 HOT_HTML = """<html><body>
@@ -52,22 +54,27 @@ class TestLeadQuality(unittest.TestCase):
     def test_cold(self): self.assertEqual(score_relevance(COLD_HTML, QUERY)["lead_quality"], "COLD")
     def test_noise_job(self):
         r = score_relevance(NOISE_JOB, QUERY)
-        self.assertEqual(r["lead_quality"], "NOISE"); self.assertTrue(r["is_noise"])
+        self.assertEqual(r["lead_quality"], "NOISE")
+        self.assertTrue(r["is_noise"])
     def test_noise_directory(self):
         r = score_relevance(NOISE_DIR, QUERY)
-        self.assertEqual(r["lead_quality"], "NOISE"); self.assertTrue(r["is_noise"])
+        self.assertEqual(r["lead_quality"], "NOISE")
+        self.assertTrue(r["is_noise"])
     def test_noise_news(self):
         r = score_relevance(NOISE_NEWS, QUERY)
-        self.assertEqual(r["lead_quality"], "NOISE"); self.assertTrue(r["is_noise"])
+        self.assertEqual(r["lead_quality"], "NOISE")
+        self.assertTrue(r["is_noise"])
 
 class TestKeywordMatch(unittest.TestCase):
-    def test_high_match_for_hot(self): self.assertGreaterEqual(score_relevance(HOT_HTML, QUERY)["keyword_match_pct"], 40)
+    def test_high_match_for_hot(self):
+        self.assertGreaterEqual(score_relevance(HOT_HTML, QUERY)["keyword_match_pct"], 40)
     def test_zero_match_irrelevant(self):
         html = "<html><body><p>Python programming tutorials for beginners.</p></body></html>"
         self.assertEqual(score_relevance(html, QUERY)["keyword_match_pct"], 0)
     def test_between_0_and_100(self):
         pct = score_relevance(HOT_HTML, QUERY)["keyword_match_pct"]
-        self.assertGreaterEqual(pct, 0); self.assertLessEqual(pct, 100)
+        self.assertGreaterEqual(pct, 0)
+        self.assertLessEqual(pct, 100)
 
 class TestRealBusinessSignals(unittest.TestCase):
     def test_has_contact(self):
@@ -78,27 +85,30 @@ class TestRealBusinessSignals(unittest.TestCase):
         self.assertTrue(score_relevance(html, "letting agents London")["has_about"])
     def test_empty_page_no_signals(self):
         r = score_relevance("<html><body></body></html>", "block management")
-        self.assertFalse(r["has_contact"]); self.assertFalse(r["has_about"])
+        self.assertFalse(r["has_contact"])
+        self.assertFalse(r["has_about"])
         self.assertFalse(r["is_noise"])
 
 class TestReturnStructure(unittest.TestCase):
-    KEYS = ("lead_quality","keyword_match_pct","has_contact","has_about","is_noise")
+    KEYS = ("lead_quality", "keyword_match_pct", "has_contact", "has_about", "is_noise")
     def test_all_keys_present(self):
         r = score_relevance(HOT_HTML, "block management")
-        for k in self.KEYS: self.assertIn(k, r)
+        for k in self.KEYS:
+            self.assertIn(k, r)
     def test_lead_quality_valid_string(self):
         self.assertIn(score_relevance(HOT_HTML, "block management")["lead_quality"],
-                      ("HOT","WARM","COLD","NOISE"))
+                      ("HOT", "WARM", "COLD", "NOISE"))
     def test_pct_is_int(self):
         self.assertIsInstance(score_relevance(WARM_HTML, "block management")["keyword_match_pct"], int)
     def test_booleans_are_bool(self):
         r = score_relevance(COLD_HTML, "block management")
-        self.assertIsInstance(r["has_contact"], bool); self.assertIsInstance(r["has_about"], bool)
+        self.assertIsInstance(r["has_contact"], bool)
+        self.assertIsInstance(r["has_about"], bool)
 
 class TestEdgeCases(unittest.TestCase):
     def test_empty_html(self):
         r = score_relevance("", QUERY)
-        self.assertIn(r["lead_quality"], ("HOT","WARM","COLD","NOISE"))
+        self.assertIn(r["lead_quality"], ("HOT", "WARM", "COLD", "NOISE"))
         self.assertEqual(r["keyword_match_pct"], 0)
     def test_empty_query(self):
         r = score_relevance(HOT_HTML, "")
@@ -108,7 +118,7 @@ class TestEdgeCases(unittest.TestCase):
         <p>Our dental team offers NHS and private dental services.</p>
         <p>Contact us to book your dental appointment today.</p></body></html>"""
         r = score_relevance(html, "dental practice Manchester")
-        self.assertIn(r["lead_quality"], ("HOT","WARM"))
+        self.assertIn(r["lead_quality"], ("HOT", "WARM"))
     def test_noise_beats_keyword_match(self):
         html = """<html><body>
         <p>block management Manchester jobs</p>
@@ -116,4 +126,5 @@ class TestEdgeCases(unittest.TestCase):
         <p>Salary £30,000 per annum. Vacancies available.</p></body></html>"""
         self.assertEqual(score_relevance(html, QUERY)["lead_quality"], "NOISE")
 
-if __name__ == "__main__": unittest.main()
+if __name__ == "__main__":
+    unittest.main()

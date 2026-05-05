@@ -54,10 +54,14 @@ def _parse_args() -> argparse.Namespace:
     args = p.parse_args()
 
     shorthand = []
-    if args.mojeek: shorthand.append("mojeek")
-    if args.ddg:    shorthand.append("duckduckgo")
-    if args.yahoo:  shorthand.append("yahoo")
-    if args.bing:   shorthand.append("bing")
+    if args.mojeek:
+        shorthand.append("mojeek")
+    if args.ddg:
+        shorthand.append("duckduckgo")
+    if args.yahoo:
+        shorthand.append("yahoo")
+    if args.bing:
+        shorthand.append("bing")
 
     if args.all:
         args.selected_engines = list(_ALL_ENGINES)

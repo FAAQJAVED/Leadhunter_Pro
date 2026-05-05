@@ -26,14 +26,13 @@ enrich_one_browser(page, target, cfg) — Pass 2: scrape email + phone via brows
 from __future__ import annotations
 
 import time
-from typing import List, Tuple
 
 from core._log import log
 from core.email_utils import (
+    best_email,
     extract_emails_full,
     extract_phones,
     score_email,
-    best_email,
 )
 from core.http_utils import _rate_limit, random_ua
 
@@ -119,7 +118,7 @@ def dismiss_cookie_banner(page, cfg: dict) -> None:  # noqa: ANN001
             pass
 
 
-def enrich_one_browser(page, target: dict, cfg: dict) -> Tuple[str, str]:
+def enrich_one_browser(page, target: dict, cfg: dict) -> tuple[str, str]:
     """
     Pass 2: find a contact email **and** phone using a Playwright-rendered page.
 
@@ -147,8 +146,8 @@ def enrich_one_browser(page, target: dict, cfg: dict) -> Tuple[str, str]:
     base          = target["website"].rstrip("/")
     contact_paths = cfg.get("contact_paths", ["/contact", "/about"])
     pw_timeout    = cfg.get("playwright_timeout", 8000)
-    emails: List[str] = []
-    phones: List[str] = []
+    emails: list[str] = []
+    phones: list[str] = []
 
     urls_to_visit = [base] + [base + p for p in contact_paths[:2]]
 

@@ -19,16 +19,15 @@ import random
 import re
 import threading
 import time
-from typing import List, Optional, Tuple
 
 import requests
 import urllib3
 
 from core.email_utils import (
+    best_email,
     extract_emails_full,
     extract_phones,
     score_email,
-    best_email,
 )
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -90,7 +89,7 @@ def fetch_url(
     url: str,
     cfg: dict,
     wall_clock_limit: int = 10,
-) -> Optional[str]:
+) -> str | None:
     """
     Fetch *url* and return the response HTML, or ``None`` on failure/timeout.
 
@@ -189,7 +188,7 @@ def extract_company_name(html: str, fallback: str = "") -> str:
     return fallback
 
 
-def enrich_one_http(target: dict, cfg: dict) -> Tuple[str, str, str]:
+def enrich_one_http(target: dict, cfg: dict) -> tuple[str, str, str]:
     """
     Pass 1: attempt to find a contact email, phone, AND company name via HTTP.
 
@@ -216,8 +215,8 @@ def enrich_one_http(target: dict, cfg: dict) -> Tuple[str, str, str]:
     """
     base          = target["website"].rstrip("/")
     contact_paths = cfg.get("contact_paths", ["/contact", "/about"])
-    emails: List[str] = []
-    phones: List[str] = []
+    emails: list[str] = []
+    phones: list[str] = []
     company_name: str = ""
 
     html = fetch_url(base, cfg)

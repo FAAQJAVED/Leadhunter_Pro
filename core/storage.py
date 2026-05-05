@@ -22,7 +22,6 @@ import json
 import os
 from datetime import date, datetime
 from pathlib import Path
-from typing import Optional, Set, Tuple
 
 from core._log import log
 
@@ -44,7 +43,7 @@ def _csv_path(path: str) -> str:
     return path.replace(".xlsx", ".csv") if path.endswith(".xlsx") else path
 
 
-def save_checkpoint(done: Set[str], found: dict, checkpoint_file: str) -> None:
+def save_checkpoint(done: set[str], found: dict, checkpoint_file: str) -> None:
     """
     Atomically persist the current done-set and found-map to a JSON checkpoint.
 
@@ -59,7 +58,7 @@ def save_checkpoint(done: Set[str], found: dict, checkpoint_file: str) -> None:
     os.replace(tmp, checkpoint_file)
 
 
-def load_checkpoint(checkpoint_file: str) -> Tuple[Set[str], dict]:
+def load_checkpoint(checkpoint_file: str) -> tuple[set[str], dict]:
     """
     Load a previously saved checkpoint.
 
@@ -78,7 +77,7 @@ def load_checkpoint(checkpoint_file: str) -> Tuple[Set[str], dict]:
         return set(), {}
 
 
-def _col_names(cfg: dict) -> Tuple[str, str, str, str, str]:
+def _col_names(cfg: dict) -> tuple[str, str, str, str, str]:
     cols = cfg.get("columns", {})
     return (
         cols.get("company_name") or "Company Name",
@@ -263,7 +262,7 @@ def save_output(
     found: dict,
     path: str,
     cfg: dict,
-    stats: Optional[dict] = None,
+    stats: dict | None = None,
 ) -> None:
     """
     Persist current results to disk.

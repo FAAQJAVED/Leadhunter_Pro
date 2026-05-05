@@ -51,9 +51,7 @@ import threading
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 import yaml
 
@@ -85,8 +83,7 @@ from core.controls import (
     wait_for_internet,
     wait_if_paused,
 )
-from core.email_utils import extract_emails_full, extract_phones, score_email, best_email
-from core.http_utils import enrich_one_http, fetch_url, extract_company_name
+from core.http_utils import enrich_one_http, extract_company_name, fetch_url
 from core.relevance import score_relevance
 from core.storage import (
     get_output_path,
@@ -170,7 +167,7 @@ DEFAULT_CONFIG: dict = {
 }
 
 
-def load_config(config_path: Optional[str] = None) -> dict:
+def load_config(config_path: str | None = None) -> dict:
     """Load configuration from YAML merged on top of hard-coded defaults."""
     cfg = {k: (v.copy() if isinstance(v, dict) else v) for k, v in DEFAULT_CONFIG.items()}
     if config_path and os.path.exists(config_path):
@@ -188,7 +185,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
 # Input loading / column detection
 # ---------------------------------------------------------------------------
 
-def _detect_column(headers: List[str], *keywords: str) -> Optional[str]:
+def _detect_column(headers: list[str], *keywords: str) -> str | None:
     """Find the first header that contains any of the given keywords (case-insensitive)."""
     for h in headers:
         h_lower = h.lower()
@@ -197,7 +194,7 @@ def _detect_column(headers: List[str], *keywords: str) -> Optional[str]:
     return None
 
 
-def find_input_file() -> Optional[str]:
+def find_input_file() -> str | None:
     """
     Auto-detect the input CSV from the current working directory OR outputs/.
 
@@ -288,7 +285,7 @@ def _detect_engines_from_csv(filepath: str) -> str:
         return ""
 
 
-def load_input(cfg: dict) -> List[dict]:
+def load_input(cfg: dict) -> list[dict]:
     """
     Load and validate the input CSV with fully automatic column detection.
 
@@ -313,7 +310,7 @@ def load_input(cfg: dict) -> List[dict]:
     if not rows:
         raise ValueError("Input file is empty.")
 
-    headers: List[str] = list(rows[0].keys())
+    headers: list[str] = list(rows[0].keys())
     cols = cfg.get("columns", {})
 
     col_web = cols.get("website") or ""
@@ -398,14 +395,14 @@ def load_input(cfg: dict) -> List[dict]:
 # ---------------------------------------------------------------------------
 
 def run_pass1(
-    targets:  List[dict],
-    done:     Set[str],
+    targets:  list[dict],
+    done:     set[str],
     found:    dict,
     out_file: str,
     state:    State,
     ctx:      dict,
     cfg:      dict,
-) -> List[dict]:
+) -> list[dict]:
     """
     Execute Pass 1: concurrent HTTP enrichment for all targets not yet in found.
 
@@ -437,7 +434,7 @@ def run_pass1(
         log("Pass 1: nothing to process")
         return []
 
-    needs_pw:    List[dict] = []
+    needs_pw:    list[dict] = []
     pass1_found: int        = 0
     save_counter: int       = 0
 
@@ -450,7 +447,7 @@ def run_pass1(
     )
     set_active_bar(bar)
 
-    def _worker(target: dict) -> Tuple[dict, str, str, str, dict]:
+    def _worker(target: dict) -> tuple[dict, str, str, str, dict]:
         """
         Enrich one site via HTTP and optionally score relevance.
 
@@ -559,8 +556,8 @@ def run_pass1(
 # ---------------------------------------------------------------------------
 
 def run_pass2(
-    needs_pw: List[dict],
-    done:     Set[str],
+    needs_pw: list[dict],
+    done:     set[str],
     found:    dict,
     out_file: str,
     state:    State,
@@ -780,7 +777,7 @@ def _print_banner() -> None:
 
 
 def _print_summary(
-    targets:  List[dict],
+    targets:  list[dict],
     found:    dict,
     out_file: str,
     stats:    dict,
@@ -841,8 +838,10 @@ def main() -> None:
     args = parse_args()
     cfg  = load_config(args.config)
 
-    if args.input:  cfg["input_file"]  = args.input
-    if args.output: cfg["output_file"] = args.output
+    if args.input:
+        cfg["input_file"] = args.input
+    if args.output:
+        cfg["output_file"] = args.output
 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -928,20 +927,23 @@ def main() -> None:
 
     _, found = load_checkpoint(ckpt)
     found.update(load_existing_output(out_file, cfg))
-    done: Set[str] = set()
+    done: set[str] = set()
 
     if found:
         log(f"Resuming — {len(found)} contacts already in cache", "good")
         try:
             import winsound as _ws
-            _ws.Beep(600, 150); _ws.Beep(900, 250)
+            _ws.Beep(600, 150)
+            _ws.Beep(900, 250)
         except Exception:
             print("\a", end="", flush=True)
     else:
         log("Fresh start", "good")
         try:
             import winsound as _ws
-            _ws.Beep(500, 100); _ws.Beep(700, 100); _ws.Beep(900, 200)
+            _ws.Beep(500, 100)
+            _ws.Beep(700, 100)
+            _ws.Beep(900, 200)
         except Exception:
             print("\a", end="", flush=True)
 
@@ -979,7 +981,8 @@ def main() -> None:
             for f, d in [(600, 100), (800, 100), (1000, 100), (1200, 300)]:
                 _ws.Beep(f, d)
         else:
-            _ws.Beep(900, 200); _ws.Beep(600, 400)
+            _ws.Beep(900, 200)
+            _ws.Beep(600, 400)
     except Exception:
         print("\a", end="", flush=True)
 

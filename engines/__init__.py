@@ -1,7 +1,7 @@
-from engines.bing        import BingEngine
-from engines.duckduckgo  import DuckDuckGoEngine
-from engines.mojeek      import MojeekEngine
-from engines.yahoo       import YahooEngine
+from engines.bing import BingEngine
+from engines.duckduckgo import DuckDuckGoEngine
+from engines.mojeek import MojeekEngine
+from engines.yahoo import YahooEngine
 
 # Engine status summary:
 #

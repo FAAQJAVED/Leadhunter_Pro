@@ -1,11 +1,15 @@
+## Readme** · **MD
+
+Copy
+
 # LeadHunter Pro
 
 **Multi-engine search scraper + contact enricher. Finds business leads, extracts emails & phones, scores lead quality.**
 
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://claude.ai/chat/LICENSE)
-[![CI](https://github.com/FAAQJAVED/Leadhunter_Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/FAAQJAVED/Leadhunter_Pro/actions)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/FAAQJAVED/Leadhunter_Pro)
+[Show Image](https://python.org)
+[Show Image](LICENSE)
+[Show Image](https://github.com/FAAQJAVED/Leadhunter_Pro/actions)
+[Show Image](https://github.com/FAAQJAVED/Leadhunter_Pro)
 
 ---
 
@@ -13,23 +17,10 @@
 
 LeadHunter Pro searches four independent search engines simultaneously to find real business websites matching your query. It then visits each website to extract a contact email address and phone number, and scores every lead as HOT, WARM, COLD, or NOISE based on how closely the page content matches what you searched for. The final output is a colour-coded Excel spreadsheet, ready to use.
 
----
-
-## Preview
-
-> Add your screenshots to the `assets/` folder and they will appear here automatically.
->
-> See [assets/README.md](https://claude.ai/chat/assets/README.md) for the recommended screenshot guide.
-
-| Phase 1 — Scraping                                                              | Phase 2 — Enrichment                                                            |
-| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| ![Phase 1 scraping in progress](https://claude.ai/chat/assets/phase1-scraping.png) | ![Phase 2 enrichment running](https://claude.ai/chat/assets/phase2-enrichment.png) |
-
-| Excel Output                                                                      | Diagnose Output                                                              |
-| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| ![Colour-coded Excel output](https://claude.ai/chat/assets/excel-output-sample.png) | ![Diagnose terminal output](https://claude.ai/chat/assets/diagnose-output.png) |
 
 ---
+
+
 
 ## How It Works
 
@@ -90,6 +81,8 @@ LeadHunter Pro searches four independent search engines simultaneously to find r
 
 ## Quick Start
 
+bash
+
 ```bash
 git clone https://github.com/FAAQJAVED/Leadhunter_Pro.git
 cd leadhunter-pro
@@ -110,6 +103,8 @@ python main.py
 ---
 
 ## Or Run Phases Separately
+
+bash
 
 ```bash
 # Phase 1 only — specific engines, specific query
@@ -136,15 +131,19 @@ python enricher.py --input outputs/leads_2026-05-01.csv
 
 **Bing proxy options:**
 
+python
+
 ```python
 # Authenticated residential proxy
-BING_PROXY = 'http://user:pass@uk.residential.proxy:8080'
+BING_PROXY ='http://user:pass@uk.residential.proxy:8080'
 
 # SOCKS5
-BING_PROXY = 'socks5://user:pass@proxy-host:1080'
+BING_PROXY ='socks5://user:pass@proxy-host:1080'
 ```
 
 ### `config.yaml` — Phase 2 (enricher) settings
+
+bash
 
 ```bash
 cp config.example.yaml config.yaml
@@ -210,6 +209,8 @@ Key settings: `http_timeout`, `playwright_timeout`, `stop_at`, `contact_paths`, 
 
 ## Diagnose Your Engines
 
+bash
+
 ```bash
 python diagnose.py              # test Mojeek, DDG, Yahoo (default)
 python diagnose.py --bing       # test Bing (run with VPN/proxy active)
@@ -240,20 +241,13 @@ Launching a headless browser for every site would take 3–5 s per site versus ~
 
 ## Part of the B2B Lead Toolkit
 
-LeadHunter Pro is the **search and discovery layer** of a three-tool pipeline. Each tool can be used independently, or run in sequence end-to-end.
+This scraper is one component of a broader B2B lead generation pipeline targeting UK property management companies, letting agents, block managers, and HMO landlords.
 
-```
-Google Maps  ──►  LeadHunter Pro  ──►  Email Enricher
-(raw listings)    (verified websites)   (emails + phones)
-```
-
-| Repo                                                                                                         | Role in pipeline                                                                         |
-| ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| **[google-maps-scraper](https://github.com/FAAQJAVED/google-maps-scraper)**                               | Extracts raw business listings — name, address, phone, website — from Google Maps      |
-| **[Leadhunter_Pro](https://github.com/FAAQJAVED/Leadhunter_Pro)**←*you are here*                       | Scrapes 4 search engines to find verified company websites, deduplicates and scores them |
-| **[Email-Phone-Number-Enrichment-Tool](https://github.com/FAAQJAVED/Email-Phone-Number-Enrichment-Tool)** | Visits each website to extract contact emails and phone numbers (standalone enricher)    |
-
-> **Note:** LeadHunter Pro includes its own built-in Phase 2 enrichment — so you can run the full pipeline with this tool alone. The standalone enricher is useful if you already have a list of websites from another source (e.g. Google Maps) and just need the contact extraction step.
+| Repo                                                                                                         | What it does                                                                                |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| **[Leadhunter_Pro](https://github.com/FAAQJAVED/Leadhunter_Pro)**←*you are here*                       | Scrapes 4 search engines to find verified company websites, scores and deduplicates results |
+| **[Email-Phone-Number-Enrichment-Tool](https://github.com/FAAQJAVED/Email-Phone-Number-Enrichment-Tool)** | Scrapes contact emails + phones from company websites                                       |
+| **[google-maps-scraper](https://github.com/FAAQJAVED/google-maps-scraper)**                               | Extracts business listings (name, address, phone, website) from Google Maps                 |
 
 ---
 
@@ -271,6 +265,8 @@ Google Maps  ──►  LeadHunter Pro  ──►  Email Enricher
 If engines return no results, return HTTP 202 / 403, or the tool stops early, it is almost always a geo-block or rate-limit. Here is what to do.
 
 ### Quick checks first
+
+bash
 
 ```bash
 python diagnose.py --all    # confirms which engines are healthy right now
@@ -311,6 +307,8 @@ Bing is the most aggressively geo-blocked engine. If you have a residential prox
 
 **Option A — `.env` file (recommended, keeps credentials out of code):**
 
+bash
+
 ```bash
 # .env
 BING_PROXY=http://user:pass@your-proxy-host:8080
@@ -318,9 +316,11 @@ BING_PROXY=http://user:pass@your-proxy-host:8080
 
 **Option B — `config.py` directly:**
 
+python
+
 ```python
-BING_PROXY = 'http://user:pass@your-proxy-host:8080'   # HTTP proxy
-BING_PROXY = 'socks5://user:pass@your-proxy-host:1080' # SOCKS5 proxy
+BING_PROXY ='http://user:pass@your-proxy-host:8080'# HTTP proxy
+BING_PROXY ='socks5://user:pass@your-proxy-host:1080'# SOCKS5 proxy
 ```
 
 Leave `BING_PROXY` empty to skip Bing entirely and run only the other three engines — they work well without a proxy on most residential connections.
@@ -331,10 +331,12 @@ Leave `BING_PROXY` empty to skip Bing entirely and run only the other three engi
 
 If you are hitting limits frequently, edit `config.py`:
 
+python
+
 ```python
-DELAY_BETWEEN_REQUESTS = (8, 15)   # seconds between individual HTTP requests (default 3–8)
-DELAY_BETWEEN_QUERIES  = (30, 60)  # seconds between queries (default 20–45)
-DELAY_BETWEEN_ENGINES  = (90, 150) # seconds between engines (default 60–120)
+DELAY_BETWEEN_REQUESTS =(8,15)# seconds between individual HTTP requests (default 3–8)
+DELAY_BETWEEN_QUERIES  =(30,60)# seconds between queries (default 20–45)
+DELAY_BETWEEN_ENGINES  =(90,150)# seconds between engines (default 60–120)
 ```
 
 The tool will still run — it just paces itself more cautiously.
@@ -343,4 +345,4 @@ The tool will still run — it just paces itself more cautiously.
 
 ## License
 
-MIT — see [LICENSE](https://claude.ai/chat/LICENSE)
+MIT — see [LICENSE](LICENSE)

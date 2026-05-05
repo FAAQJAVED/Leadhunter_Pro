@@ -8,12 +8,12 @@ import csv
 import logging
 import os
 from collections import Counter
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
 
 import openpyxl
-from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from config import OUTPUT_DIR
@@ -216,19 +216,29 @@ class OutputWriter:
         by_eng  = Counter(r.search_engine for r in self._records)
 
         row = 1
-        _hdr(row, '📊 SCRAPE SUMMARY'); row += 1
-        _row(row, 'Total Records',   total);          row += 1
-        _row(row, 'Unique Domains',  unique);          row += 1
-        _row(row, 'Flagged Records', flagged);         row += 1
-        _row(row, 'Clean Records',   total - flagged); row += 1
-        _row(row, 'Generated',       datetime.now().strftime('%Y-%m-%d %H:%M')); row += 2
+        _hdr(row, '📊 SCRAPE SUMMARY')
+        row += 1
+        _row(row, 'Total Records', total)
+        row += 1
+        _row(row, 'Unique Domains', unique)
+        row += 1
+        _row(row, 'Flagged Records', flagged)
+        row += 1
+        _row(row, 'Clean Records', total - flagged)
+        row += 1
+        _row(row, 'Generated', datetime.now().strftime('%Y-%m-%d %H:%M'))
+        row += 2
 
-        _hdr(row, '🔍 Results by Engine'); row += 1
+        _hdr(row, '🔍 Results by Engine')
+        row += 1
         for engine, count in sorted(by_eng.items()):
-            _row(row, engine.capitalize(), count); row += 1
+            _row(row, engine.capitalize(), count)
+            row += 1
         row += 1
 
         by_query = Counter(r.search_query for r in self._records)
-        _hdr(row, '🔎 Top Queries (by records found)'); row += 1
+        _hdr(row, '🔎 Top Queries (by records found)')
+        row += 1
         for query, count in by_query.most_common(20):
-            _row(row, query[:45], count); row += 1
+            _row(row, query[:45], count)
+            row += 1

@@ -4,17 +4,21 @@ pipeline.http_client — httpx Client with exponential backoff and UA rotation.
 
 from __future__ import annotations
 
+import logging
 import random
 import time
-import logging
 from collections import namedtuple
 from urllib.parse import quote, unquote
 
 import httpx
 
 from config import (
-    CONNECT_TIMEOUT, READ_TIMEOUT, FOLLOW_REDIRECTS,
-    HTTP2_ENABLED, MAX_RETRIES, USER_AGENTS,
+    CONNECT_TIMEOUT,
+    FOLLOW_REDIRECTS,
+    HTTP2_ENABLED,
+    MAX_RETRIES,
+    READ_TIMEOUT,
+    USER_AGENTS,
 )
 
 logger = logging.getLogger('lead_engine.http')

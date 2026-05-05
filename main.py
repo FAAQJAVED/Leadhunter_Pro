@@ -27,18 +27,23 @@ except ImportError:
 import httpx
 from tqdm import tqdm
 
-from pipeline.logger_setup import setup_logging
 from config import (
-    ENGINES_PRIORITY, PAGES_PER_QUERY, BING_PROXY,
-    DELAY_BETWEEN_QUERIES, DELAY_BETWEEN_ENGINES, DELAY_BETWEEN_PAGES,
-    BEEP_COMPLETE, BEEP_ERROR,
+    BEEP_COMPLETE,
+    BEEP_ERROR,
+    BING_PROXY,
+    DELAY_BETWEEN_ENGINES,
+    DELAY_BETWEEN_PAGES,
+    DELAY_BETWEEN_QUERIES,
+    ENGINES_PRIORITY,
+    PAGES_PER_QUERY,
 )
-from pipeline.http_client import HttpClient
-from pipeline.query_manager import QueryManager, CheckpointStore
-from pipeline.data_cleaner import DataCleaner
-from pipeline.output_writer import OutputWriter
+from core.controls import ControlListener, State, interruptible_sleep
 from engines import ENGINE_MAP
-from core.controls import State, ControlListener, interruptible_sleep
+from pipeline.data_cleaner import DataCleaner
+from pipeline.http_client import HttpClient
+from pipeline.logger_setup import setup_logging
+from pipeline.output_writer import OutputWriter
+from pipeline.query_manager import CheckpointStore, QueryManager
 
 # Accept-Language: en-GB matches HttpClient session headers
 _BASE_HDRS = {
@@ -182,10 +187,14 @@ def parse_args() -> argparse.Namespace:
     args = p.parse_args()
 
     shorthand = []
-    if args.mojeek: shorthand.append("mojeek")
-    if args.ddg:    shorthand.append("duckduckgo")
-    if args.yahoo:  shorthand.append("yahoo")
-    if args.bing:   shorthand.append("bing")
+    if args.mojeek:
+        shorthand.append("mojeek")
+    if args.ddg:
+        shorthand.append("duckduckgo")
+    if args.yahoo:
+        shorthand.append("yahoo")
+    if args.bing:
+        shorthand.append("bing")
     if shorthand:
         args.engines = shorthand
     elif args.engines is None:
@@ -315,7 +324,7 @@ def main() -> None:
     # Initialise shared state and keyboard listener
     state = State()
     ctx   = {'found': 0, 'done': 0}
-    listener = ControlListener(state, ctx)
+    ControlListener(state, ctx)
 
     checkpoint = CheckpointStore()
     has_checkpoint = checkpoint.load()

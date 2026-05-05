@@ -3,7 +3,9 @@ tests.test_cleaner — Tests for DataCleaner and URL/domain utilities.
 """
 
 import unittest
-from pipeline.data_cleaner import DataCleaner, derive_name_from_domain, normalise_url
+
+from pipeline.data_cleaner import DataCleaner, derive_name_from_domain
+
 
 class MockResult:
     def __init__(self, url, title, snippet):

@@ -17,8 +17,6 @@ check_disk(min_mb)                               — warn when free disk is low.
 
 from __future__ import annotations
 
-from datetime import datetime
-
 import os
 import platform
 import select
@@ -27,10 +25,10 @@ import socket
 import sys
 import threading
 import time
+from datetime import datetime
 
 from core._log import log
 from core.storage import save_output
-
 
 # ── Shared run state ──────────────────────────────────────────────────────────
 
@@ -113,15 +111,19 @@ class ControlListener:
         if key == "P":
             s.paused = not s.paused
             if s.paused:
-                log("PAUSED — press P or R to resume", "warn");  _beep("stop")
+                log("PAUSED — press P or R to resume", "warn")
+                _beep("stop")
             else:
-                log("RESUMED", "good");                           _beep("resume")
+                log("RESUMED", "good")
+                _beep("resume")
         elif key == "R" and s.paused:
             s.paused = False
-            log("RESUMED", "good");                               _beep("resume")
+            log("RESUMED", "good")
+            _beep("resume")
         elif key == "Q":
             s.stop = True
-            log("QUIT — saving and exiting …", "warn");           _beep("stop")
+            log("QUIT — saving and exiting …", "warn")
+            _beep("stop")
         elif key == "S":
             log(
                 f"status → found:{self._ctx.get('found', 0)} "
@@ -277,11 +279,17 @@ def check_cmd_file(state: State, cmd_file: str, checkpoint_file: str) -> None:
             _f.write("")
 
         if cmd == "pause":
-            state.paused = True;  log("PAUSED (cmd file)", "warn");   _beep("stop")
+            state.paused = True
+            log("PAUSED (cmd file)", "warn")
+            _beep("stop")
         elif cmd in ("resume", "r"):
-            state.paused = False; log("RESUMED (cmd file)", "good");   _beep("resume")
+            state.paused = False
+            log("RESUMED (cmd file)", "good")
+            _beep("resume")
         elif cmd in ("stop", "q"):
-            state.stop = True;    log("STOP — saving …", "warn");      _beep("stop")
+            state.stop = True
+            log("STOP — saving …", "warn")
+            _beep("stop")
         elif cmd == "fresh":
             if os.path.exists(checkpoint_file):
                 os.remove(checkpoint_file)

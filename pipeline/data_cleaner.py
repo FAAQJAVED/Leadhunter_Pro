@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import re
 from datetime import datetime, timezone
-from urllib.parse import urlparse, urlencode, parse_qsl, urlunparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from config import EXCLUDED_DOMAINS, SCORE_BOOST_KEYWORDS
 

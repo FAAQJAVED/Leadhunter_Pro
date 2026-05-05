@@ -8,14 +8,14 @@ import base64
 import logging
 import warnings
 import xml.etree.ElementTree as ET
-from urllib.parse import quote_plus, urlparse, parse_qs, unquote
+from urllib.parse import parse_qs, quote_plus, unquote, urlparse
 
 from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 
-warnings.filterwarnings('ignore', category=XMLParsedAsHTMLWarning)
-
 from engine_base import BaseEngine, SearchResult
 from pipeline.http_client import HttpClient, Response
+
+warnings.filterwarnings('ignore', category=XMLParsedAsHTMLWarning)
 
 logger = logging.getLogger('lead_engine.bing')
 

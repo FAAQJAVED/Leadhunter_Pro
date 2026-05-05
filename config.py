@@ -1,7 +1,8 @@
 # config.py — LeadHunter Pro: All Tuneable Settings
 
-from os import path as os_path
 import os
+from os import path as os_path
+
 try:
     from dotenv import load_dotenv
     load_dotenv()

@@ -3,7 +3,9 @@ tests.test_email_utils — Tests for email and phone extraction logic.
 """
 
 import unittest
+
 from core.email_utils import extract_emails_raw, extract_phones
+
 
 class TestEmailUtils(unittest.TestCase):
 

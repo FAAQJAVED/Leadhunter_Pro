@@ -420,7 +420,7 @@ Adds `Email`, `Phone`, `Lead Quality`, and `Keyword Match %` columns. The `lead_
 ### Step 1: Installation
 
 ```bash
-git clone https://github.com/FAAQJAVED/leadhunter-pro
+git clone https://github.com/<<GITHUB_USERNAME>>/leadhunter-pro
 cd leadhunter-pro
 pip install -r requirements.txt
 python -m playwright install chromium
