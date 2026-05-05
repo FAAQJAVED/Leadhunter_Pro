@@ -1,0 +1,98 @@
+# config.example.yaml — LeadHunter Pro Enricher Configuration
+output_format: "xlsx"
+
+http_timeout:           [4, 6]
+playwright_timeout:     8000
+browser_restart_every:  150
+stop_at:                ""        # "" = disabled; set to "HH:MM" (24h) to auto-stop e.g. "23:00"
+autosave_interval:      60
+
+# [IMP-1] Concurrent worker count for HTTP enrichment
+enricher_workers: 5
+
+rate_limit:
+  min_seconds: 0.1
+  max_seconds: 0.5
+
+# [IMP-2] TLDs that should be flagged as geo-suspect (e.g. ['in', 'pk', 'ru'])
+GEO_SUSPECT_TLDS: []
+
+# [IMP-3] Keywords that boost the lead score if found in the URL
+score_boost_keywords: []
+
+skip_email_keywords:
+  - noreply
+  - no-reply
+  - donotreply
+  - privacy
+  - dataprotection
+  - data-protection
+  - gdpr
+  - unsubscribe
+  - postmaster
+  - webmaster
+  - bounce
+  - complaints
+  - legal
+  - abuse
+  - spam
+  - newsletter
+
+generic_email_keywords:
+  - info
+  - admin
+  - hello
+  - contact
+  - enquiries
+  - enquiry
+  - office
+  - mail
+  - email
+  - team
+  - support
+  - help
+  - sales
+  - accounts
+  - finance
+  - general
+  - service
+  - post
+
+junk_email_domains:
+  - sentry.io
+  - wixpress.com
+  - example.com
+  - schema.org
+  - w3.org
+  - googleapis.com
+  - cloudflare.com
+  - jquery.com
+  # [IMP-4] Placeholder domains
+  - placeholder.com
+  - domain.com
+  - email.com
+  - doe.com
+  - test.com
+  - mailinator.com
+  - yopmail.com
+  - tempmail.com
+  - trashmail.com
+
+contact_paths:
+  - /contact
+  - /contact-us
+  - /about
+  - /about-us
+
+locale: "en-US"
+
+cookie_selectors:
+  - 'button:has-text("Accept all")'
+  - 'button:has-text("Accept cookies")'
+  - 'button:has-text("Accept")'
+  - 'button:has-text("I Accept")'
+  - 'button:has-text("Allow all")'
+  - 'button:has-text("OK")'
+  - 'button:has-text("Got it")'
+  - '[id*="accept"]'
+  - '[aria-label*="Accept"]'

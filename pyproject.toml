@@ -1,0 +1,20 @@
+[project]
+name = "leadhunter-pro"
+version = "1.1.0"
+description = "Multi-engine lead scraper + contact enricher. Finds businesses via search engines, extracts emails and phones, scores lead quality."
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["lead-generation", "web-scraping", "email-extraction", "python"]
+readme = "README.md"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts   = "--tb=short -q"

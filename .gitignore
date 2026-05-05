@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Project outputs (never commit scraped data)
+outputs/
+logs/
+checkpoints/
+debug_html/
+
+# Enricher state
+enrich_checkpoint.json
+found_contacts_*.xlsx
+found_contacts_*.csv
+command.txt
+
+# Config (user must copy from example)
+config.yaml
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Environment variables (never commit)
+.env

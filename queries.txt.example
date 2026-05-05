@@ -1,0 +1,18 @@
+# queries.txt.example — LeadHunter Pro example query file
+#
+# Copy to queries.txt and add your own queries (one per line).
+# Lines starting with # are comments and are ignored.
+#
+#   cp queries.txt.example queries.txt
+#
+# Tips:
+#   - Be specific: include the service type AND location
+#   - Use natural language phrases, not keyword lists
+#   - Vary location specificity for broader coverage
+#   - 20–50 queries is a good starting point for a full run
+
+block management companies London
+residential block management Manchester
+letting agents Birmingham city centre
+property management companies Leeds
+facilities management companies Bristol
