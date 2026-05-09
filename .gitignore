@@ -23,6 +23,7 @@ command.txt
 
 # Config (user must copy from example)
 config.yaml
+queries.txt
 
 # OS
 .DS_Store
