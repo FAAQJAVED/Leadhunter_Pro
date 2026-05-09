@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI](https://github.com/FAAQJAVED/Leadhunter_Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/FAAQJAVED/Leadhunter_Pro/actions)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-72%20passing-brightgreen)](tests/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/FAAQJAVED/Leadhunter_Pro)
 
 ---
@@ -301,6 +301,22 @@ Leadhunter_Pro/
 - Bing: set `BING_PROXY` in `config.py` or use a VPN for reliable results
 
 ---
+
+---
+
+## Tech Stack
+
+| Library | Role |
+|---|---|
+| `httpx[http2]` | Phase 1 — async HTTP/2 requests for search engine scraping |
+| `beautifulsoup4` | Phase 1 — HTML parsing for search result extraction |
+| `lxml` | Phase 1 — fast HTML/XML parser (beautifulsoup backend) |
+| `playwright` | Phase 2 — headless Chromium fallback for JS-rendered sites |
+| `requests` | Phase 2 — lightweight HTTP GET for contact enrichment pass |
+| `openpyxl` | Excel output with colour-coded rows and Summary sheet |
+| `pyyaml` | YAML config loading for Phase 2 settings |
+| `tqdm` | Live terminal progress bar with ETA for both phases |
+| `python-dotenv` | Optional — loads BING_PROXY from .env file |
 
 ## License
 
