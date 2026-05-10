@@ -1,6 +1,6 @@
 # LeadHunter Pro
 
-**Multi-engine search scraper + contact enricher. Finds business leads, extracts emails & phones, scores lead quality.**
+**Production-grade Python lead generation engine — scrapes 4 independent search engines simultaneously, enriches every result with email and phone, and scores each lead HOT / WARM / COLD for prioritised outreach. Type a query, get a ready-to-use Excel lead list.**
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -10,20 +10,13 @@
 
 ---
 
-## What It Does
-
-LeadHunter Pro searches four independent search engines simultaneously to find real business websites matching your query. It then visits each website to extract a contact email address and phone number, and scores every lead as HOT, WARM, COLD, or NOISE based on how closely the page content matches what you searched for. The final output is a colour-coded Excel spreadsheet, ready to use.
+Found this useful? A ⭐ on GitHub helps other developers find it.
 
 ---
 
-## Part of the B2B Lead Toolkit
+## Table of Contents
 
-| Repo                                                                                                  | What it does                                                |
-| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| **[Leadhunter Pro](https://github.com/FAAQJAVED/Leadhunter_Pro)** ← *you are here*              | Multi-engine search scraper with HOT/WARM/COLD lead scoring |
-| **[Email Phone Enrichment Tool](https://github.com/FAAQJAVED/Email-Phone-Number-Enrichment-Tool)** | Scrapes contact emails + phones from company websites       |
-| **[Google Maps Business Scraper](https://github.com/FAAQJAVED/Google-Maps-Business-Scraper)**      | Extracts and enriches business listings from Google Maps    |
-| **[Trustpilot Business Scraper](https://github.com/FAAQJAVED/trustpilot-business-scraper)**        | Extracts business listings from Trustpilot search results   |
+[Preview](#preview) · [What It Does](#what-it-does) · [Use Cases](#use-cases) · [How It Works](#how-it-works) · [Features](#features) · [Performance](#performance) · [What Data You Get](#what-data-you-get) · [Quick Start](#quick-start) · [Blueprint Reference](#blueprint-reference) · [Run Phases Separately](#or-run-phases-separately) · [Configuration](#configuration) · [Runtime Controls](#runtime-controls) · [Output Format](#output-format) · [Diagnose Your Engines](#diagnose-your-engines) · [Architecture Notes](#architecture-notes) · [Tech Stack](#tech-stack) · [Project Structure](#project-structure) · [Requirements](#requirements) · [Troubleshooting](#troubleshooting) · [B2B Lead Toolkit](#part-of-the-b2b-lead-toolkit) · [License](#license)
 
 ---
 
@@ -36,6 +29,31 @@ LeadHunter Pro searches four independent search engines simultaneously to find r
 | Excel Output                                               | Diagnose Output                                       |
 | ---------------------------------------------------------- | ----------------------------------------------------- |
 | ![Colour-coded Excel output](assets/excel-output-sample.png) | ![Diagnose terminal output](assets/diagnose-output.png) |
+
+---
+
+## What It Does
+
+1. **Reads `queries.txt`** — one search query per line (e.g. `property managers manchester`)
+2. **Phase 1 — Scrapes 4 search engines** (Mojeek, DuckDuckGo, Yahoo, Bing) for each query, deduplicates results across engines, and saves a lead CSV.
+3. **Phase 2 — Enriches every lead** by visiting each website: Pass 1 (fast HTTP GET) then Playwright fallback for JS-rendered sites.
+4. **Scores each lead** HOT / WARM / COLD / NOISE based on keyword matching against the original query — prioritised for outreach.
+5. **Outputs a styled Excel file** — colour-coded by score, sorted by quality, hyperlinked websites, and a Summary sheet with engine statistics.
+
+Each engine runs in its own session with a warmup request to avoid HTTP 202 bot challenges. Results are deduplicated across all four engines using URL normalisation and domain deduplication before enrichment begins. A built-in `diagnose.py` tool checks each engine's health before a run.
+
+---
+
+## Use Cases
+
+| Who uses it | What they do | Example query |
+|---|---|---|
+| **Sales teams** | Generate targeted prospect lists for cold email campaigns | `"accountants london"` → 400+ HOT leads with email |
+| **Marketing agencies** | Deliver multi-source lead lists for any UK industry vertical | `"estate agents birmingham"` → enriched Excel in 2 hours |
+| **Freelance lead gen** | Automate research for clients across any niche and geography | Any query → score-sorted Excel ready for CRM import |
+| **Recruiters** | Identify employers in a sector and geography with direct contact | `"law firms edinburgh"` → HR emails and direct lines |
+| **Market researchers** | Map a category using 4 independent search indexes simultaneously | Any query → deduplicated coverage from all 4 engines |
+| **SDRs** | Build daily outreach lists with pre-scored priority rankings | Multiple queries → HOT leads on top, COLD at bottom |
 
 ---
 
@@ -96,6 +114,33 @@ LeadHunter Pro searches four independent search engines simultaneously to find r
 
 ---
 
+## Performance
+
+| Mode | Queries | Leads generated | Enrichment | Time |
+|---|---|---|---|---|
+| Single query | 1 | 20–60 leads | All 4 engines | 3–8 min |
+| Small batch | 5–10 queries | 100–300 leads | Full 2-pass | 20–40 min |
+| Overnight run | 50+ queries | 800–2,000 leads | Full 2-pass | 3–8 hours |
+
+> **Real run:** `"property managers manchester"` — 1 query across all 4 engines, **62 unique leads from Mojeek alone** (pages 1–9), full enrichment pipeline applied. HOT leads sorted to top with 100% keyword match.
+
+---
+
+## What Data You Get
+
+| Field | Example |
+|---|---|
+| Company Name | Prime Residential |
+| Website | https://primeresidentialpm.com/ |
+| Email | manchester@primeresidentialpm.com |
+| Phone | 01612413335 |
+| Lead Quality | HOT |
+| Keyword Match % | 100 |
+
+See [`assets/sample_output.csv`](assets/sample_output.csv) for 20 rows of real output extracted from a live scrape.
+
+---
+
 ## Quick Start
 
 ```bash
@@ -114,6 +159,12 @@ python diagnose.py
 # Run Phase 1 (scraping) — prompted for Phase 2 (enrichment) at the end
 python main.py
 ```
+
+---
+
+## Blueprint Reference
+
+For a complete technical deep-dive — architecture decisions, engine behaviour, rate-limit strategy, scoring model, and extension guide — see [BLUEPRINT.md](BLUEPRINT.md).
 
 ---
 
@@ -242,6 +293,22 @@ Launching a headless browser for every site would take 3–5 s per site versus ~
 
 ---
 
+## Tech Stack
+
+| Library | Role |
+|---|---|
+| `httpx[http2]` | Phase 1 — async HTTP/2 requests for search engine scraping |
+| `beautifulsoup4` | Phase 1 — HTML parsing for search result extraction |
+| `lxml` | Phase 1 — fast HTML/XML parser (beautifulsoup backend) |
+| `playwright` | Phase 2 — headless Chromium fallback for JS-rendered sites |
+| `requests` | Phase 2 — lightweight HTTP GET for contact enrichment pass |
+| `openpyxl` | Excel output with colour-coded rows and Summary sheet |
+| `pyyaml` | YAML config loading for Phase 2 settings |
+| `tqdm` | Live terminal progress bar with ETA for both phases |
+| `python-dotenv` | Optional — loads BING_PROXY from .env file |
+
+---
+
 ## Project Structure
 
 ```
@@ -302,21 +369,33 @@ Leadhunter_Pro/
 
 ---
 
+## Troubleshooting
+
+**Bing returning results in wrong language or region:**
+Set `BING_PROXY=http://user:pass@host:8080` in your `.env` file. `BING_PROXY` is read automatically at startup.
+
+**DuckDuckGo returning HTTP 202 with no results:**
+DDG's warmup mechanism is handled automatically. If persistent, increase `DELAY_BETWEEN_ENGINES` in `config.py` or pause for 10–15 minutes.
+
+**One engine returning zero results consistently:**
+Run `python diagnose.py` — it fires a test query at each engine and reports the HTTP status, result count, and error. Use it to identify which engine to temporarily disable in `ENGINES_PRIORITY` in `config.py`.
+
+**Script stops mid-run:**
+Checkpoint is saved every 50 queries. Re-run with the same `queries.txt` to resume from where it stopped.
+
 ---
 
-## Tech Stack
+## Part of the B2B Lead Toolkit
 
-| Library | Role |
+| Repo | What it does |
 |---|---|
-| `httpx[http2]` | Phase 1 — async HTTP/2 requests for search engine scraping |
-| `beautifulsoup4` | Phase 1 — HTML parsing for search result extraction |
-| `lxml` | Phase 1 — fast HTML/XML parser (beautifulsoup backend) |
-| `playwright` | Phase 2 — headless Chromium fallback for JS-rendered sites |
-| `requests` | Phase 2 — lightweight HTTP GET for contact enrichment pass |
-| `openpyxl` | Excel output with colour-coded rows and Summary sheet |
-| `pyyaml` | YAML config loading for Phase 2 settings |
-| `tqdm` | Live terminal progress bar with ETA for both phases |
-| `python-dotenv` | Optional — loads BING_PROXY from .env file |
+| **[Leadhunter Pro](https://github.com/FAAQJAVED/Leadhunter_Pro)** ← *you are here* | Multi-engine search scraper with HOT/WARM/COLD lead scoring |
+| **[Email Phone Enrichment Tool](https://github.com/FAAQJAVED/Email-Phone-Number-Enrichment-Tool)** | Scrapes contact emails + phones from company websites |
+| **[Google Maps Business Scraper](https://github.com/FAAQJAVED/Google-Maps-Business-Scraper)** | Extracts and enriches business listings from Google Maps |
+| **[Trustpilot Business Scraper](https://github.com/FAAQJAVED/trustpilot-business-scraper)** | Extracts business listings from Trustpilot search results |
+| **[JSON Directory Harvester](https://github.com/FAAQJAVED/json-directory-harvester)** | Configurable harvester for any JSON directory API with geo-filtering |
+
+---
 
 ## License
 
