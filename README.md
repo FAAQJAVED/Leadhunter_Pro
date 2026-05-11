@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI](https://github.com/FAAQJAVED/Leadhunter_Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/FAAQJAVED/Leadhunter_Pro/actions)
-[![Tests](https://img.shields.io/badge/tests-72%20passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-78%20passing-brightgreen)](tests/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/FAAQJAVED/Leadhunter_Pro)
 
 ---
@@ -17,7 +17,6 @@ Found this useful? A ⭐ on GitHub helps other developers find it.
 > **Responsible use:** Only scrape websites you have permission to access.
 > Always check a site's `robots.txt` and terms of service before running
 > LeadHunter Pro against it at scale.
-
 
 ## Table of Contents
 
@@ -51,14 +50,14 @@ Each engine runs in its own session with a warmup request to avoid HTTP 202 bot 
 
 ## Use Cases
 
-| Who uses it | What they do | Example query |
-|---|---|---|
-| **Sales teams** | Generate targeted prospect lists for cold email campaigns | `"accountants london"` → 400+ HOT leads with email |
-| **Marketing agencies** | Deliver multi-source lead lists for any UK industry vertical | `"estate agents birmingham"` → enriched Excel in 2 hours |
-| **Freelance lead gen** | Automate research for clients across any niche and geography | Any query → score-sorted Excel ready for CRM import |
-| **Recruiters** | Identify employers in a sector and geography with direct contact | `"law firms edinburgh"` → HR emails and direct lines |
-| **Market researchers** | Map a category using 4 independent search indexes simultaneously | Any query → deduplicated coverage from all 4 engines |
-| **SDRs** | Build daily outreach lists with pre-scored priority rankings | Multiple queries → HOT leads on top, COLD at bottom |
+| Who uses it                  | What they do                                                     | Example query                                               |
+| ---------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------- |
+| **Sales teams**        | Generate targeted prospect lists for cold email campaigns        | `"accountants london"` → 400+ HOT leads with email       |
+| **Marketing agencies** | Deliver multi-source lead lists for any UK industry vertical     | `"estate agents birmingham"` → enriched Excel in 2 hours |
+| **Freelance lead gen** | Automate research for clients across any niche and geography     | Any query → score-sorted Excel ready for CRM import        |
+| **Recruiters**         | Identify employers in a sector and geography with direct contact | `"law firms edinburgh"` → HR emails and direct lines     |
+| **Market researchers** | Map a category using 4 independent search indexes simultaneously | Any query → deduplicated coverage from all 4 engines       |
+| **SDRs**               | Build daily outreach lists with pre-scored priority rankings     | Multiple queries → HOT leads on top, COLD at bottom        |
 
 ---
 
@@ -121,11 +120,11 @@ Each engine runs in its own session with a warmup request to avoid HTTP 202 bot 
 
 ## Performance
 
-| Mode | Queries | Leads generated | Enrichment | Time |
-|---|---|---|---|---|
-| Single query | 1 | 20–60 leads | All 4 engines | 3–8 min |
-| Small batch | 5–10 queries | 100–300 leads | Full 2-pass | 20–40 min |
-| Overnight run | 50+ queries | 800–2,000 leads | Full 2-pass | 3–8 hours |
+| Mode          | Queries       | Leads generated  | Enrichment    | Time       |
+| ------------- | ------------- | ---------------- | ------------- | ---------- |
+| Single query  | 1             | 20–60 leads     | All 4 engines | 3–8 min   |
+| Small batch   | 5–10 queries | 100–300 leads   | Full 2-pass   | 20–40 min |
+| Overnight run | 50+ queries   | 800–2,000 leads | Full 2-pass   | 3–8 hours |
 
 > **Real run:** `"property managers manchester"` — 1 query across all 4 engines, **62 unique leads from Mojeek alone** (pages 1–9), full enrichment pipeline applied. HOT leads sorted to top with 100% keyword match.
 
@@ -133,14 +132,14 @@ Each engine runs in its own session with a warmup request to avoid HTTP 202 bot 
 
 ## What Data You Get
 
-| Field | Example |
-|---|---|
-| Company Name | Prime Residential |
-| Website | https://primeresidentialpm.com/ |
-| Email | manchester@primeresidentialpm.com |
-| Phone | 01612413335 |
-| Lead Quality | HOT |
-| Keyword Match % | 100 |
+| Field           | Example                           |
+| --------------- | --------------------------------- |
+| Company Name    | Prime Residential                 |
+| Website         | https://primeresidentialpm.com/   |
+| Email           | manchester@primeresidentialpm.com |
+| Phone           | 01612413335                       |
+| Lead Quality    | HOT                               |
+| Keyword Match % | 100                               |
 
 See [`assets/sample_output.csv`](assets/sample_output.csv) for 20 rows of real output extracted from a live scrape.
 
@@ -214,25 +213,25 @@ BING_PROXY = 'socks5://user:pass@proxy-host:1080'
 cp config.example.yaml config.yaml
 ```
 
-| Key | Default | Description |
-|---|---|---|
-| `output_format` | `xlsx` | Output format — `xlsx` or `csv` |
-| `http_timeout` | `[4, 6]` | Pass 1 HTTP timeout range `[min, max]` in seconds |
-| `playwright_timeout` | `8000` | Pass 2 Playwright page load timeout in milliseconds |
-| `browser_restart_every` | `150` | Restart Chromium every N sites to prevent memory leaks |
-| `stop_at` | `""` | Wall-clock auto-stop in 24h format — `""` = disabled (e.g. `"23:00"`) |
-| `autosave_interval` | `60` | Background checkpoint save interval in seconds |
-| `enricher_workers` | `5` | Concurrent worker count for Pass 1 HTTP enrichment |
-| `rate_limit.min_seconds` | `0.1` | Minimum delay between HTTP requests |
-| `rate_limit.max_seconds` | `0.5` | Maximum delay between HTTP requests |
-| `GEO_SUSPECT_TLDS` | `[]` | TLDs flagged as geo-suspect — e.g. `['in', 'pk', 'ru']` |
-| `score_boost_keywords` | `[]` | URL keywords that give a +1 score boost to a lead |
-| `skip_email_keywords` | `[noreply, no-reply, …]` | Local-part patterns that discard an email entirely (score 999) |
-| `generic_email_keywords` | `[info, admin, support, …]` | Generics used to assign email quality tier (2 or 3) |
-| `junk_email_domains` | `[mailinator.com, …]` | Domains whose emails are always discarded |
-| `contact_paths` | `[/contact, /about, …]` | Sub-pages visited per site in Pass 1 after the homepage |
-| `locale` | `en-US` | Browser locale passed to Playwright for Pass 2 |
-| `cookie_selectors` | `[…]` | Playwright selectors tried for cookie banner dismissal (10 defaults) |
+| Key                        | Default                        | Description                                                               |
+| -------------------------- | ------------------------------ | ------------------------------------------------------------------------- |
+| `output_format`          | `xlsx`                       | Output format —`xlsx` or `csv`                                       |
+| `http_timeout`           | `[4, 6]`                     | Pass 1 HTTP timeout range `[min, max]` in seconds                       |
+| `playwright_timeout`     | `8000`                       | Pass 2 Playwright page load timeout in milliseconds                       |
+| `browser_restart_every`  | `150`                        | Restart Chromium every N sites to prevent memory leaks                    |
+| `stop_at`                | `""`                         | Wall-clock auto-stop in 24h format —`""` = disabled (e.g. `"23:00"`) |
+| `autosave_interval`      | `60`                         | Background checkpoint save interval in seconds                            |
+| `enricher_workers`       | `5`                          | Concurrent worker count for Pass 1 HTTP enrichment                        |
+| `rate_limit.min_seconds` | `0.1`                        | Minimum delay between HTTP requests                                       |
+| `rate_limit.max_seconds` | `0.5`                        | Maximum delay between HTTP requests                                       |
+| `GEO_SUSPECT_TLDS`       | `[]`                         | TLDs flagged as geo-suspect — e.g.`['in', 'pk', 'ru']`                 |
+| `score_boost_keywords`   | `[]`                         | URL keywords that give a +1 score boost to a lead                         |
+| `skip_email_keywords`    | `[noreply, no-reply, …]`    | Local-part patterns that discard an email entirely (score 999)            |
+| `generic_email_keywords` | `[info, admin, support, …]` | Generics used to assign email quality tier (2 or 3)                       |
+| `junk_email_domains`     | `[mailinator.com, …]`       | Domains whose emails are always discarded                                 |
+| `contact_paths`          | `[/contact, /about, …]`     | Sub-pages visited per site in Pass 1 after the homepage                   |
+| `locale`                 | `en-US`                      | Browser locale passed to Playwright for Pass 2                            |
+| `cookie_selectors`       | `[…]`                       | Playwright selectors tried for cookie banner dismissal (10 defaults)      |
 
 ---
 
@@ -318,17 +317,17 @@ Launching a headless browser for every site would take 3–5 s per site versus ~
 
 ## Tech Stack
 
-| Library | Role |
-|---|---|
-| `httpx[http2]` | Phase 1 — async HTTP/2 requests for search engine scraping |
-| `beautifulsoup4` | Phase 1 — HTML parsing for search result extraction |
-| `lxml` | Phase 1 — fast HTML/XML parser (beautifulsoup backend) |
-| `playwright` | Phase 2 — headless Chromium fallback for JS-rendered sites |
-| `requests` | Phase 2 — lightweight HTTP GET for contact enrichment pass |
-| `openpyxl` | Excel output with colour-coded rows and Summary sheet |
-| `pyyaml` | YAML config loading for Phase 2 settings |
-| `tqdm` | Live terminal progress bar with ETA for both phases |
-| `python-dotenv` | Optional — loads BING_PROXY from .env file |
+| Library            | Role                                                        |
+| ------------------ | ----------------------------------------------------------- |
+| `httpx[http2]`   | Phase 1 — async HTTP/2 requests for search engine scraping |
+| `beautifulsoup4` | Phase 1 — HTML parsing for search result extraction        |
+| `lxml`           | Phase 1 — fast HTML/XML parser (beautifulsoup backend)     |
+| `playwright`     | Phase 2 — headless Chromium fallback for JS-rendered sites |
+| `requests`       | Phase 2 — lightweight HTTP GET for contact enrichment pass |
+| `openpyxl`       | Excel output with colour-coded rows and Summary sheet       |
+| `pyyaml`         | YAML config loading for Phase 2 settings                    |
+| `tqdm`           | Live terminal progress bar with ETA for both phases         |
+| `python-dotenv`  | Optional — loads BING_PROXY from .env file                 |
 
 ---
 
@@ -410,13 +409,13 @@ Checkpoint is saved every 50 queries. Re-run with the same `queries.txt` to resu
 
 ## Part of the B2B Lead Toolkit
 
-| Repo | What it does |
-|---|---|
-| **[Leadhunter Pro](https://github.com/FAAQJAVED/Leadhunter_Pro)** ← *you are here* | Multi-engine search scraper with HOT/WARM/COLD lead scoring |
-| **[Email Phone Enrichment Tool](https://github.com/FAAQJAVED/Email-Phone-Number-Enrichment-Tool)** | Scrapes contact emails + phones from company websites |
-| **[Google Maps Business Scraper](https://github.com/FAAQJAVED/Google-Maps-Business-Scraper)** | Extracts and enriches business listings from Google Maps |
-| **[Trustpilot Business Scraper](https://github.com/FAAQJAVED/trustpilot-business-scraper)** | Extracts business listings from Trustpilot search results |
-| **[JSON Directory Harvester](https://github.com/FAAQJAVED/json-directory-harvester)** | Configurable harvester for any JSON directory API with geo-filtering |
+| Repo                                                                                                  | What it does                                                         |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **[Leadhunter Pro](https://github.com/FAAQJAVED/Leadhunter_Pro)** ← *you are here*              | Multi-engine search scraper with HOT/WARM/COLD lead scoring          |
+| **[Email Phone Enrichment Tool](https://github.com/FAAQJAVED/Email-Phone-Number-Enrichment-Tool)** | Scrapes contact emails + phones from company websites                |
+| **[Google Maps Business Scraper](https://github.com/FAAQJAVED/Google-Maps-Business-Scraper)**      | Extracts and enriches business listings from Google Maps             |
+| **[Trustpilot Business Scraper](https://github.com/FAAQJAVED/trustpilot-business-scraper)**        | Extracts business listings from Trustpilot search results            |
+| **[JSON Directory Harvester](https://github.com/FAAQJAVED/json-directory-harvester)**              | Configurable harvester for any JSON directory API with geo-filtering |
 
 ---
 
