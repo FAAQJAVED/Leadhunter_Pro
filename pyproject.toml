@@ -7,6 +7,11 @@ license = { text = "MIT" }
 keywords = ["lead-generation", "web-scraping", "email-extraction", "python"]
 readme = "README.md"
 
+[project.urls]
+Repository    = "https://github.com/FAAQJAVED/Leadhunter_Pro"
+Homepage      = "https://github.com/FAAQJAVED/Leadhunter_Pro"
+"Bug Tracker" = "https://github.com/FAAQJAVED/Leadhunter_Pro/issues"
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
