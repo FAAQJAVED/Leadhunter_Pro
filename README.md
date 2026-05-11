@@ -14,6 +14,11 @@ Found this useful? A ⭐ on GitHub helps other developers find it.
 
 ---
 
+> **Responsible use:** Only scrape websites you have permission to access.
+> Always check a site's `robots.txt` and terms of service before running
+> LeadHunter Pro against it at scale.
+
+
 ## Table of Contents
 
 [Preview](#preview) · [What It Does](#what-it-does) · [Use Cases](#use-cases) · [How It Works](#how-it-works) · [Features](#features) · [Performance](#performance) · [What Data You Get](#what-data-you-get) · [Quick Start](#quick-start) · [Blueprint Reference](#blueprint-reference) · [Run Phases Separately](#or-run-phases-separately) · [Configuration](#configuration) · [Runtime Controls](#runtime-controls) · [Output Format](#output-format) · [Diagnose Your Engines](#diagnose-your-engines) · [Architecture Notes](#architecture-notes) · [Tech Stack](#tech-stack) · [Project Structure](#project-structure) · [Requirements](#requirements) · [Troubleshooting](#troubleshooting) · [B2B Lead Toolkit](#part-of-the-b2b-lead-toolkit) · [License](#license)
@@ -209,7 +214,25 @@ BING_PROXY = 'socks5://user:pass@proxy-host:1080'
 cp config.example.yaml config.yaml
 ```
 
-Key settings: `http_timeout`, `playwright_timeout`, `stop_at`, `contact_paths`, `skip_email_keywords`.
+| Key | Default | Description |
+|---|---|---|
+| `output_format` | `xlsx` | Output format — `xlsx` or `csv` |
+| `http_timeout` | `[4, 6]` | Pass 1 HTTP timeout range `[min, max]` in seconds |
+| `playwright_timeout` | `8000` | Pass 2 Playwright page load timeout in milliseconds |
+| `browser_restart_every` | `150` | Restart Chromium every N sites to prevent memory leaks |
+| `stop_at` | `""` | Wall-clock auto-stop in 24h format — `""` = disabled (e.g. `"23:00"`) |
+| `autosave_interval` | `60` | Background checkpoint save interval in seconds |
+| `enricher_workers` | `5` | Concurrent worker count for Pass 1 HTTP enrichment |
+| `rate_limit.min_seconds` | `0.1` | Minimum delay between HTTP requests |
+| `rate_limit.max_seconds` | `0.5` | Maximum delay between HTTP requests |
+| `GEO_SUSPECT_TLDS` | `[]` | TLDs flagged as geo-suspect — e.g. `['in', 'pk', 'ru']` |
+| `score_boost_keywords` | `[]` | URL keywords that give a +1 score boost to a lead |
+| `skip_email_keywords` | `[noreply, no-reply, …]` | Local-part patterns that discard an email entirely (score 999) |
+| `generic_email_keywords` | `[info, admin, support, …]` | Generics used to assign email quality tier (2 or 3) |
+| `junk_email_domains` | `[mailinator.com, …]` | Domains whose emails are always discarded |
+| `contact_paths` | `[/contact, /about, …]` | Sub-pages visited per site in Pass 1 after the homepage |
+| `locale` | `en-US` | Browser locale passed to Playwright for Pass 2 |
+| `cookie_selectors` | `[…]` | Playwright selectors tried for cookie banner dismissal (10 defaults) |
 
 ---
 
