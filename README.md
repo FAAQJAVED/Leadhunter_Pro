@@ -416,7 +416,7 @@ Checkpoint is saved every 50 queries. Re-run with the same `queries.txt` to resu
 | **[Google Maps Business Scraper](https://github.com/FAAQJAVED/Google-Maps-Business-Scraper)**      | Extracts and enriches business listings from Google Maps             |
 | **[Trustpilot Business Scraper](https://github.com/FAAQJAVED/trustpilot-business-scraper)**        | Extracts business listings from Trustpilot search results            |
 | **[JSON Directory Harvester](https://github.com/FAAQJAVED/json-directory-harvester)**              | Configurable harvester for any JSON directory API with geo-filtering |
-
+| **[HTML Directory Scrapers](https://github.com/FAAQJAVED/html-directory-scrapers)** | Two-engine toolkit for HTML and WordPress AJAX directories |
 ---
 
 ## License
