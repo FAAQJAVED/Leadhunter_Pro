@@ -1,5 +1,16 @@
 # Changelog
 
+
+## v1.1.2 — 2026-06-19
+
+### Bug Fixes
+
+- **Mojeek engine** – removed `&fmt=html` from search URL to avoid bot detection (403 Forbidden).  
+- **HTTP client** – updated base headers to modern Chrome 136 fingerprint (Cache-Control, full Accept, Sec-CH-UA).  
+- **Main scraper** – Mojeek warmup now uses the shared `HttpClient` instance to preserve session cookies.  
+- **Diagnose** – fixed unused import (`xmlrpc.client`) and unused variable (`warm1`) to satisfy ruff linting.
+
+
 ## v1.1.1 — 2026-05-12
 
 ### Test updates
