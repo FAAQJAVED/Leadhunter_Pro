@@ -135,81 +135,97 @@ def _base_domain(url: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Headers & UA rotation
+# Headers & UA rotation – modern Chrome 136 set
 # ---------------------------------------------------------------------------
-BASE = {
-    "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+# Base headers for warmup and search – these mimic a real Chrome browser
+BASE_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
     "Accept-Language": "en-GB,en;q=0.9",
     "Accept-Encoding": "gzip, deflate, br",
-    "DNT":             "1",
+    "Connection": "keep-alive",
     "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Cache-Control": "max-age=0",
+    "Sec-CH-UA": '"Chromium";v="136", "Google Chrome";v="136", "Not:A-Brand";v="99"',
+    "Sec-CH-UA-Mobile": "?0",
+    "Sec-CH-UA-Platform": '"Windows"',
 }
 
-BING_HDRS = {**BASE,
+# Engine-specific overrides
+YAHOO_HEADERS = {**BASE_HEADERS, "Referer": "https://search.yahoo.com/"}
+DDG_HEADERS = {**BASE_HEADERS, "Referer": "https://duckduckgo.com/", "Origin": "https://duckduckgo.com"}
+BING_HEADERS = {**BASE_HEADERS,
     "X-MSEdge-ClientIP": "81.141.0.1",
     "X-MSEdge-Market":   "en-GB",
     "X-Search-Location": "lat:51.5074;long:-0.1278;re:1000",
 }
-
-YAHOO_HDRS = {**BASE, "Referer": "https://search.yahoo.com/"}
-
-DDG_HDRS = {**BASE,
-    "Referer": "https://duckduckgo.com/",
-    "Origin":  "https://duckduckgo.com",
+MOJEEK_HEADERS = {**BASE_HEADERS,
+    "Referer": "https://www.mojeek.com/",
+    "Sec-Fetch-Site": "same-origin",   # navigation from homepage to search
 }
 
 _UA_POOL = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
 ]
-_last_ua = [BASE["User-Agent"]]
+_last_ua = [BASE_HEADERS["User-Agent"]]
 
 
 def _rotate_ua(headers: dict) -> dict:
+    """Pick a UA different from the last one and update headers."""
     pool = [ua for ua in _UA_POOL if ua != _last_ua[0]]
     if not pool:
         pool = _UA_POOL
     ua = random.choice(pool)
     _last_ua[0] = ua
-    return {**headers, "User-Agent": ua}
+    # Update Sec-CH-UA to match the new Chrome version
+    m = __import__('re').search(r'Chrome/(\d+)', ua)
+    sec_ch_ua = f'"Chromium";v="{m.group(1)}", "Google Chrome";v="{m.group(1)}", "Not:A-Brand";v="99"' if m else headers.get("Sec-CH-UA", "")
+    return {**headers, "User-Agent": ua, "Sec-CH-UA": sec_ch_ua}
 
 
 def build_engines(query: str) -> dict:
+    """Return engine configs; Mojeek URL no longer uses &fmt=html."""
     return {
         "mojeek": {
-            "name": "mojeek", "label": "Mojeek — primary engine, confirmed working",
+            "name": "mojeek", "label": "Mojeek — primary engine",
             "url": (f"https://www.mojeek.com/search?q={_qs(query)}"
-                    f"&fmt=html&lang=en&hp=0&arc=none"),
-            "method": "GET", "data": None, "headers": BASE,
+                    f"&lang=en&hp=0&arc=none"),   # &fmt=html removed
+            "method": "GET", "data": None,
+            "headers": MOJEEK_HEADERS,
+            "warmup_needed": True,
         },
         "duckduckgo": {
             "name": "duckduckgo", "label": "DDG Lite POST (lite.duckduckgo.com/lite/)",
             "url": "https://lite.duckduckgo.com/lite/",
             "method": "POST",
             "data": {"q": query, "s": "0", "kl": "wt-wt", "kp": "-1"},
-            "headers": DDG_HDRS,
+            "headers": DDG_HEADERS,
+            "warmup_needed": True,
         },
         "yahoo": {
             "name": "yahoo", "label": "Yahoo Search HTML (own index, no geo-lock)",
             "url": (f"https://search.yahoo.com/search"
                     f"?p={_qs(query)}&b=1&pz=10&vl=lang_en&fl=1"),
-            "method": "GET", "data": None, "headers": YAHOO_HDRS,
+            "method": "GET", "data": None,
+            "headers": YAHOO_HEADERS,
+            "warmup_needed": True,
         },
         "bing": {
-            "name": "bing", "label": "Bing RSS + geo-override headers (X-MSEdge-Market: en-GB, London coords)",
+            "name": "bing", "label": "Bing RSS + geo-override headers (en-GB, London coords)",
             "url": (f"https://www.bing.com/search?q={_qs(query)}"
                     f"&format=RSS&first=1&mkt=en-GB&cc=GB"
                     f"&setlang=en-GB&ensearch=1&count=10"),
-            "method": "GET", "data": None, "headers": BING_HDRS,
+            "method": "GET", "data": None,
+            "headers": BING_HEADERS,
+            "warmup_needed": False,
         },
     }
 
@@ -269,11 +285,11 @@ def count_results(soup: BeautifulSoup, name: str, geo_passed: int = 0) -> int:
                 n += 1
         return n
 
-    if name == "duckduckgo":
-        return len(soup.select("a.result-link"))
-
     if name == "mojeek":
         return len(soup.select("a.ob"))
+
+    if name == "duckduckgo":
+        return len(soup.select("a.result-link"))
 
     return 0
 
@@ -361,50 +377,6 @@ def estimate_overlap(engine_urls: dict) -> list:
     return rows
 
 
-def _do_warmup(name: str, no_wait: bool) -> dict:
-    """
-    Run engine-specific warmup immediately before the engine's request.
-
-    Per-engine warmup (not pre-flight) ensures the session is always fresh
-    (≤2 s gap between warmup and first request), preventing HTTP 202 from
-    DDG and HTTP 500 from Yahoo when other engines ran first.
-    """
-    sleep_s = 0.3 if no_wait else 1.5
-    cookies: dict = {}
-
-    if name == "duckduckgo":
-        print("  DDG warmup...", end=" ", flush=True)
-        try:
-            warm = httpx.get(
-                "https://duckduckgo.com/",
-                headers=_rotate_ua(BASE),
-                timeout=httpx.Timeout(10.0, connect=10, read=20),
-                follow_redirects=True,
-            )
-            cookies = dict(warm.cookies)
-            print(f"HTTP {warm.status_code} ({len(cookies)} cookies)")
-        except Exception as e:
-            print(f"FAILED ({e}) — proceeding without cookies")
-        time.sleep(sleep_s)
-
-    elif name == "yahoo":
-        print("  Yahoo warmup...", end=" ", flush=True)
-        try:
-            warm = httpx.get(
-                "https://search.yahoo.com/",
-                headers=_rotate_ua(YAHOO_HDRS),
-                timeout=httpx.Timeout(10.0, connect=10, read=20),
-                follow_redirects=True,
-            )
-            cookies = dict(warm.cookies)
-            print(f"HTTP {warm.status_code} ({len(cookies)} cookies)")
-        except Exception as e:
-            print(f"FAILED ({e}) — proceeding without cookies")
-        time.sleep(sleep_s)
-
-    return cookies
-
-
 def main() -> None:
     args = _parse_args()
 
@@ -414,12 +386,15 @@ def main() -> None:
     except ImportError:
         brotli_ok = False
 
+    # Load proxy from environment (reuse BING_PROXY for all engines if you like)
     bing_proxy = ""
     try:
         from config import BING_PROXY
         bing_proxy = BING_PROXY
     except ImportError:
         pass
+    # Optionally, set a separate proxy for Mojeek:
+    mojeek_proxy = os.getenv("MOJEEK_PROXY", bing_proxy)   # fallback to BING_PROXY
 
     all_engine_defs = build_engines(args.query)
     engines = [all_engine_defs[name] for name in args.selected_engines
@@ -432,7 +407,7 @@ def main() -> None:
     print(f'  Query: "{args.query}"')
     print(f"  Mode : {', '.join(e['name'] for e in engines)}")
     if args.no_wait:
-        print("  Speed: --no-wait active (minimal sleeps between engines)")
+        print("  Speed: --no-wait active (minimal sleeps)")
     print("=" * 70)
 
     print("\n[Pre-flight]")
@@ -444,10 +419,7 @@ def main() -> None:
     engine_urls: dict = {}
 
     for idx, eng in enumerate(engines):
-        name    = eng["name"]
-        cookies = _do_warmup(name, getattr(args, "no_wait", False))
-        headers = _rotate_ua(eng.get("headers", BASE))
-
+        name = eng["name"]
         print(f"\n{'─' * 70}")
         print(f"  ENGINE : {name.upper()}  |  {eng['label']}")
 
@@ -457,28 +429,84 @@ def main() -> None:
             else:
                 print("  Proxy  : none (set BING_PROXY in config.py for UK results)")
             print("  Note   : Run with VPN/proxy active for valid UK results")
+        elif name == "mojeek" and mojeek_proxy:
+            print(f"  Proxy  : {mojeek_proxy[:50]}{'...' if len(mojeek_proxy) > 50 else ''}")
 
         print(f"{'─' * 70}")
 
+        # Prepare client for this engine
+        headers = _rotate_ua(eng["headers"])
+        proxy_url = mojeek_proxy if name == "mojeek" else (bing_proxy if name == "bing" else None)
+
+        client_kwargs = {
+            "headers": headers,
+            "timeout": httpx.Timeout(15.0, connect=10.0, read=30.0),
+            "follow_redirects": True,
+            "http2": True,   # if httpx[http2] installed; otherwise ignored
+        }
+        if proxy_url:
+            client_kwargs["proxies"] = {"http://": proxy_url, "https://": proxy_url}
+
+        # Create a single client for warmup + search
         try:
-            client_kwargs: dict = dict(
-                headers=headers,
-                timeout=httpx.Timeout(10.0, connect=10, read=30),
-                follow_redirects=True,
-                cookies=cookies,
-            )
-            if name == "bing" and bing_proxy:
-                client_kwargs["proxies"] = bing_proxy
-
             client = httpx.Client(**client_kwargs)
+        except Exception as e:
+            print(f"  ERROR creating client: {e}")
+            summary[name] = 0
+            continue
 
-            t0    = time.monotonic()
-            resp  = (client.get(eng["url"]) if eng["method"] == "GET"
-                     else client.post(eng["url"], data=eng["data"]))
-            took  = time.monotonic() - t0
+        # ---- Warmup ----
+        if eng.get("warmup_needed", False):
+            if name == "mojeek":
+                print("  Mojeek warmup...", end=" ", flush=True)
+                try:
+                    warm_resp = client.get("https://www.mojeek.com/")
+                    print(f"HTTP {warm_resp.status_code} ({len(dict(warm_resp.cookies))} cookies)")
+                except Exception as e:
+                    print(f"FAILED ({e}) — proceeding without warmup")
+                # Realistic delay after warmup
+                delay = 0.3 if args.no_wait else random.uniform(1.5, 3.0)
+                time.sleep(delay)
+
+            elif name == "duckduckgo":
+                print("  DDG warmup...", end=" ", flush=True)
+                try:
+                    warm_resp = client.get("https://duckduckgo.com/")
+                    print(f"HTTP {warm_resp.status_code} ({len(dict(warm_resp.cookies))} cookies)")
+                except Exception as e:
+                    print(f"FAILED ({e}) — proceeding without warmup")
+                time.sleep(0.3 if args.no_wait else 1.5)
+
+            elif name == "yahoo":
+                print("  Yahoo warmup...", end=" ", flush=True)
+                try:
+                    # Step 1: yahoo.com
+                    warm1 = client.get("https://yahoo.com/")
+                    time.sleep(0.3 if args.no_wait else 1.5)
+                    # Step 2: search.yahoo.com with cookies from step 1
+                    # we need to update headers for step 2 – but we can just use the same client
+                    # which already has cookies from step 1
+                    # Set Referer for the second request
+                    client.headers.update({"Referer": "https://yahoo.com/", "Sec-Fetch-Site": "same-site"})
+                    warm2 = client.get("https://search.yahoo.com/")
+                    print(f"HTTP {warm2.status_code} ({len(dict(warm2.cookies))} cookies)")
+                    # Restore original headers for search
+                    client.headers.update(eng["headers"])
+                except Exception as e:
+                    print(f"FAILED ({e}) — proceeding without warmup")
+                time.sleep(0.3 if args.no_wait else 2.0)
+
+        # ---- Search ----
+        try:
+            t0 = time.monotonic()
+            if eng["method"] == "GET":
+                resp = client.get(eng["url"])
+            else:
+                resp = client.post(eng["url"], data=eng["data"])
+            took = time.monotonic() - t0
             status = resp.status_code
-            html   = resp.text
-            size   = len(html)
+            html = resp.text
+            size = len(html)
             client.close()
 
             fpath = os.path.join("debug_html", f"{name}_raw.html")
@@ -495,16 +523,16 @@ def main() -> None:
             if name == "bing":
                 print("\n  [RSS PARSE]")
                 try:
-                    root  = ET.fromstring(html.lstrip("\ufeff").strip())
+                    root = ET.fromstring(html.lstrip("\ufeff").strip())
                     items = root.findall(".//item")
                     rss_parsed = len(items)
                     print(f"  Items parsed by ET: {rss_parsed}")
                     for i, item in enumerate(items[:5], 1):
-                        lnk  = item.find("link")
-                        ttl  = item.find("title")
+                        lnk = item.find("link")
+                        ttl = item.find("title")
                         desc = item.find("description")
-                        t    = (ttl.text  or "") if ttl  is not None else ""
-                        d    = (desc.text or "") if desc is not None else ""
+                        t = (ttl.text or "") if ttl is not None else ""
+                        d = (desc.text or "") if desc is not None else ""
                         print(f"    {i}. {t[:60]}")
                         print(f"       {(lnk.text or '')[:70]}")
                         if d:
@@ -570,26 +598,21 @@ def main() -> None:
             summary[name] = result_count
 
         except httpx.ConnectError as e:
-            # DNS failure is often transient — the ISP resolver gets temporarily
-            # exhausted after several consecutive engine requests in multi-engine
-            # mode. One retry after a short pause resolves it in most cases.
             print(f"  ERROR DNS FAILED: {e}")
             print("  Retrying in 5s...")
             time.sleep(5)
             try:
-                client2 = httpx.Client(
-                    headers=headers,
-                    timeout=httpx.Timeout(15.0, connect=15, read=30),
-                    follow_redirects=True,
-                    cookies=cookies,
-                )
-                t0    = time.monotonic()
-                resp  = (client2.get(eng["url"]) if eng["method"] == "GET"
-                         else client2.post(eng["url"], data=eng["data"]))
-                took  = time.monotonic() - t0
+                # Recreate client for retry
+                client2 = httpx.Client(**client_kwargs)
+                t0 = time.monotonic()
+                if eng["method"] == "GET":
+                    resp = client2.get(eng["url"])
+                else:
+                    resp = client2.post(eng["url"], data=eng["data"])
+                took = time.monotonic() - t0
                 status = resp.status_code
-                html   = resp.text
-                size   = len(html)
+                html = resp.text
+                size = len(html)
                 client2.close()
                 fpath = os.path.join("debug_html", f"{name}_raw.html")
                 with open(fpath, "w", encoding="utf-8", errors="replace") as f:
@@ -622,13 +645,7 @@ def main() -> None:
     print(f"\n{'=' * 70}")
     print("  RESULT SUMMARY")
     print(f"  {'─' * 68}")
-    # Per-engine OK thresholds.
-    # Mojeek and DDG always return exactly 10 links → threshold 10.
-    # Yahoo's count_results deduplicates by domain, so 10 raw results often
-    # collapse to 7-9 unique domains — threshold lowered to 7.
-    # Bing results are geo-filtered so fewer pass the English check → threshold 5.
     _OK_THRESHOLD = {"mojeek": 10, "duckduckgo": 10, "yahoo": 7, "bing": 5}
-
     for eng_name, count in summary.items():
         thresh = _OK_THRESHOLD.get(eng_name, 10)
         icon = "OK" if count >= thresh else ("PARTIAL" if count > 0 else "FAIL")
@@ -636,7 +653,7 @@ def main() -> None:
 
     working = sum(1 for n, c in summary.items() if c >= _OK_THRESHOLD.get(n, 10))
     partial = sum(1 for n, c in summary.items() if 0 < c < _OK_THRESHOLD.get(n, 10))
-    total   = len(summary)
+    total = len(summary)
     print(f"\n  Engines fully working: {working}/{total}")
     if partial:
         print(f"  Engines partially working (>0 but <10 results/page): {partial}/{total}")
