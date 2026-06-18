@@ -27,7 +27,16 @@ class MojeekEngine(BaseEngine):
 
     def _first_page(self) -> dict:
         encoded = quote_plus(self._query)
-        url = f'{_BASE}/search?q={encoded}&fmt=html&lang=en&hp=0&arc=none'
+        url = f'{_BASE}/search?q={encoded}&lang=en&hp=0&arc=none'
+        # Mojeek bot-detection checks Sec-Fetch-Site and Referer.
+        # A real browser navigating homepage → search sends same-origin + Referer.
+        # The Mojeek warmup in main.py / diagnose.py fetches the homepage first
+        # and sets these; this call makes them explicit for standalone use too.
+        self._client.set_headers({
+            'Referer':        'https://www.mojeek.com/',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-User': '?1',
+        })
         return {'url': url, 'data': None}
 
     def _next_page(self, soup: BeautifulSoup) -> dict:
