@@ -25,7 +25,6 @@ import time
 import warnings
 import xml.etree.ElementTree as ET
 from urllib.parse import unquote, urlparse
-from xmlrpc import client
 
 import httpx
 from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
