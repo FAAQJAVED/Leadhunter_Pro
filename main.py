@@ -45,18 +45,31 @@ from pipeline.logger_setup import setup_logging
 from pipeline.output_writer import OutputWriter
 from pipeline.query_manager import CheckpointStore, QueryManager
 
-# Accept-Language: en-GB matches HttpClient session headers
+# ============================================================
+# UPDATED HEADERS – same as in diagnose.py (full Chrome 136 set)
+# ============================================================
 _BASE_HDRS = {
-    "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
-    "Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
     "Accept-Language": "en-GB,en;q=0.9",
     "Accept-Encoding": "gzip, deflate, br",
-    "DNT": "1", "Upgrade-Insecure-Requests": "1",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Cache-Control": "max-age=0",
+    "Sec-CH-UA": '"Chromium";v="136", "Google Chrome";v="136", "Not:A-Brand";v="99"',
+    "Sec-CH-UA-Mobile": "?0",
+    "Sec-CH-UA-Platform": '"Windows"',
 }
+
 _DDG_WARMUP_HDRS   = {**_BASE_HDRS, "Referer": "https://duckduckgo.com/",
                       "Origin": "https://duckduckgo.com"}
-_YAHOO_WARMUP_HDRS = {**_BASE_HDRS, "Referer": "https://search.yahoo.com/"}
+_YAHOO_WARMUP_HDRS = {**_BASE_HDRS,
+                      "Referer":        "https://yahoo.com/",
+                      "Sec-Fetch-Site": "same-site"}
 
 
 def _do_engine_warmup(engine_name: str, shared_client: HttpClient,
@@ -91,10 +104,9 @@ def _do_engine_warmup(engine_name: str, shared_client: HttpClient,
         logger.info("[warmup] Yahoo — two-step session warmup (yahoo.com → search.yahoo.com)...")
         yahoo_warmup_ok = False
         try:
-            # Step 1: visit yahoo.com to pick up base cookies naturally
             _yahoo_home_hdrs = {**_YAHOO_WARMUP_HDRS, "Referer": ""}
             resp1 = httpx.get(
-                "https://uk.yahoo.com/",
+                "https://yahoo.com/",
                 headers={k: v for k, v in _yahoo_home_hdrs.items() if v},
                 timeout=httpx.Timeout(10.0, connect=10, read=20),
                 follow_redirects=True,
@@ -104,7 +116,6 @@ def _do_engine_warmup(engine_name: str, shared_client: HttpClient,
                         len(dict(resp1.cookies)))
             time.sleep(random.uniform(1.5, 2.5))
 
-            # Step 2: hit search.yahoo.com with the cookies from step 1
             resp = httpx.get(
                 "https://search.yahoo.com/",
                 headers=_YAHOO_WARMUP_HDRS,
@@ -118,8 +129,6 @@ def _do_engine_warmup(engine_name: str, shared_client: HttpClient,
                         len(dict(resp.cookies)))
 
             if resp.status_code == 500:
-                # First 500: wait 90–150 seconds (Yahoo IP rate-limits typically
-                # reset within 2 minutes; 20-35s was too short)
                 wait = random.uniform(90, 150)
                 logger.warning(
                     "[warmup] Yahoo HTTP 500 — IP rate-limited. "
@@ -138,14 +147,12 @@ def _do_engine_warmup(engine_name: str, shared_client: HttpClient,
                             resp2.status_code, len(dict(resp2.cookies)))
 
                 if resp2.status_code == 500:
-                    # Both attempts failed — Yahoo has hard-blocked this IP.
-                    # Skip Yahoo for this run rather than wasting time on 500s.
                     logger.warning(
                         "[warmup] Yahoo blocked after 2 attempts "
                         "(IP rate-limit active). Skipping Yahoo this run. "
                         "Wait 10+ minutes then try: python main.py --yahoo --fresh"
                     )
-                    return False  # signal to caller: skip this engine
+                    return False
                 else:
                     yahoo_warmup_ok = True
             else:
@@ -160,9 +167,25 @@ def _do_engine_warmup(engine_name: str, shared_client: HttpClient,
             return True
         else:
             time.sleep(random.uniform(3.0, 5.0))
-            return True  # warmup failed but engine may still work — let it try
+            return True
 
-    # Mojeek, Bing, and any future engines need no warmup
+    elif engine_name == "mojeek":
+        # CRITICAL: Use the shared HttpClient for warmup so that session
+        # (cookies, TLS, HTTP/2) is reused for the search request.
+        logger.info("[warmup] Mojeek — homepage prefetch for session cookies...")
+        try:
+            # This GET will store any cookies in the shared session.
+            resp = shared_client.get("https://www.mojeek.com/")
+            logger.info("[warmup] Mojeek HTTP %d (%d cookies)",
+                        resp.http, len(dict(shared_client.session.cookies)))
+            # Set Referer for subsequent requests (engine will set it again, but fine)
+            shared_client.set_headers({"Referer": "https://www.mojeek.com/"})
+        except Exception as exc:
+            logger.warning("[warmup] Mojeek warmup failed: %s — proceeding", exc)
+        time.sleep(random.uniform(1.5, 2.5))
+        return True
+
+    # Bing (RSS endpoint) needs no warmup.
     return True
 
 
@@ -321,7 +344,6 @@ def main() -> None:
     logger.info("Engines: %s | Pages/query: %d", args.engines, args.pages)
     logger.info("Controls: P=pause  R=resume  Q=quit  S=status  W=handoff")
 
-    # Initialise shared state and keyboard listener
     state = State()
     ctx   = {'found': 0, 'done': 0}
     ControlListener(state, ctx)
@@ -369,7 +391,6 @@ def main() -> None:
     )
 
     skipped_engines: dict[str, bool] = {}
-    # Per-engine statistics counters
     engine_stats: dict[str, dict] = {e: {'found': 0, 'pages': 0} for e in args.engines}
     csv_path = ""
 
@@ -398,7 +419,7 @@ def main() -> None:
             for q_idx, query in enumerate(pending):
                 if state.stop:
                     break
-                    
+
                 pbar.set_description(f"{engine_name.capitalize()[:6]} | {query[:30]}")
 
                 try:
@@ -422,8 +443,7 @@ def main() -> None:
 
                 checkpoint.on_records_added(len(new_records))
                 qm.mark_done(query)
-                
-                # Update live status counters
+
                 ctx['found'] = writer.count()
                 ctx['done'] += 1
                 engine_stats[engine_name]['found'] += len(new_records)
@@ -444,7 +464,6 @@ def main() -> None:
                 if q_idx < len(pending) - 1 and not state.stop:
                     wait = random.uniform(*DELAY_BETWEEN_QUERIES)
                     logger.debug("Query delay: %.1fs", wait)
-                    # Interruptible sleep (respects P/Q/R controls)
                     interruptible_sleep(state, wait)
 
             if state.stop:
@@ -455,7 +474,6 @@ def main() -> None:
             if remaining:
                 wait = random.uniform(*DELAY_BETWEEN_ENGINES)
                 logger.info("Switching engine in %.0fs...", wait)
-                # Interruptible sleep (respects P/Q/R controls)
                 interruptible_sleep(state, wait)
 
     except KeyboardInterrupt:
@@ -492,15 +510,14 @@ def main() -> None:
     print(f"  Unique domains     : {len({r.domain for r in writer._records}):,}")
     print(f"  Flagged/excluded   : {sum(1 for r in writer._records if r.flagged):,}")
     print(f"  Time elapsed       : {h:02d}:{m:02d}:{s:02d}")
-    
-    # Per-engine summary table
+
     print("-" * 60)
     print(f"  {'Engine':<15} | {'Leads':<10} | {'Pages':<10}")
     print("-" * 60)
     for eng, stats in engine_stats.items():
         print(f"  {eng.capitalize():<15} | {stats['found']:<10} | {stats['pages']:<10}")
     print("-" * 60)
-    
+
     print(f"  CSV saved to       : {csv_path}")
     print(f"  Excel saved to     : {xlsx_path}")
     print("=" * 60)
