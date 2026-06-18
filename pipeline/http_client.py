@@ -6,11 +6,10 @@ from __future__ import annotations
 
 import logging
 import random
+import re
 import time
 from collections import namedtuple
 from urllib.parse import quote, unquote
-
-import re
 
 import httpx
 
