@@ -10,6 +10,8 @@ import time
 from collections import namedtuple
 from urllib.parse import quote, unquote
 
+import re
+
 import httpx
 
 from config import (
@@ -78,13 +80,25 @@ class HttpClient:
         return self._request('POST', url, data=data)
 
     def rotate_ua(self) -> str:
-        """Pick a new UA that is different from the last one."""
+        """Pick a new UA that is different from the last one.
+
+        Also updates Sec-CH-UA to match the Chrome version in the new UA so
+        the two headers remain internally consistent (required by modern bot
+        detection systems since Chrome 89 / 2021).
+        """
         pool = [ua for ua in self._ua_pool if ua != self._last_ua]
         if not pool:
             pool = self._ua_pool
         ua = random.choice(pool)
         self._last_ua = ua
-        self.session.headers.update({'User-Agent': ua})
+        update: dict = {'User-Agent': ua}
+        m = re.search(r'Chrome/(\d+)', ua)
+        if m:
+            v = m.group(1)
+            update['Sec-CH-UA'] = (
+                f'"Chromium";v="{v}", "Google Chrome";v="{v}", "Not:A-Brand";v="99"'
+            )
+        self.session.headers.update(update)
         logger.debug("UA rotated → %s", ua[:60])
         return ua
 
@@ -142,13 +156,27 @@ class HttpClient:
 
     @staticmethod
     def _build_base_headers() -> dict:
+        """
+        Full modern browser headers that match the ones used in diagnose.py.
+        This is critical for Mojeek and other engines that check for Cache-Control,
+        a complete Accept header, and Sec-CH-UA.
+        """
         return {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'Accept-Language': 'en-GB,en;q=0.9',
             'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive',
             'DNT': '1',
             'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0',
+            'Sec-CH-UA': '"Chromium";v="136", "Google Chrome";v="136", "Not:A-Brand";v="99"',
+            'Sec-CH-UA-Mobile': '?0',
+            'Sec-CH-UA-Platform': '"Windows"',
         }
 
     @staticmethod
