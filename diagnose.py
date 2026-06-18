@@ -25,6 +25,7 @@ import time
 import warnings
 import xml.etree.ElementTree as ET
 from urllib.parse import unquote, urlparse
+from xmlrpc import client
 
 import httpx
 from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
@@ -476,27 +477,23 @@ def main() -> None:
                 except Exception as e:
                     print(f"FAILED ({e}) — proceeding without warmup")
                 time.sleep(0.3 if args.no_wait else 1.5)
-
             elif name == "yahoo":
                 print("  Yahoo warmup...", end=" ", flush=True)
                 try:
-                    # Step 1: yahoo.com
-                    warm1 = client.get("https://yahoo.com/")
+                    # Step 1: yahoo.com – stores cookies in the client session
+                    client.get("https://yahoo.com/")
                     time.sleep(0.3 if args.no_wait else 1.5)
                     # Step 2: search.yahoo.com with cookies from step 1
-                    # we need to update headers for step 2 – but we can just use the same client
-                    # which already has cookies from step 1
-                    # Set Referer for the second request
+                    # Update headers for the second request (Referer, Sec-Fetch-Site)
                     client.headers.update({"Referer": "https://yahoo.com/", "Sec-Fetch-Site": "same-site"})
                     warm2 = client.get("https://search.yahoo.com/")
                     print(f"HTTP {warm2.status_code} ({len(dict(warm2.cookies))} cookies)")
-                    # Restore original headers for search
+                    # Restore original headers for the search request
                     client.headers.update(eng["headers"])
                 except Exception as e:
                     print(f"FAILED ({e}) — proceeding without warmup")
                 time.sleep(0.3 if args.no_wait else 2.0)
-
-        # ---- Search ----
+            # ---- Search ----
         try:
             t0 = time.monotonic()
             if eng["method"] == "GET":
