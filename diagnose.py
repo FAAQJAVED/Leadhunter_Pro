@@ -31,6 +31,16 @@ from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
+# Yahoo-only transport (2026-06-18): httpx returns HTTP 500 on every
+# Yahoo request regardless of headers/warmup. curl_cffi (Chrome TLS
+# impersonation) succeeds cold. See pipeline/curl_client.py for the
+# full rationale. Mojeek/DDG/Bing are unaffected and still use httpx.
+try:
+    from curl_cffi.requests import Session as CurlSession
+    CURL_CFFI_AVAILABLE = True
+except ImportError:
+    CURL_CFFI_AVAILABLE = False
+
 _DEFAULT_ENGINES = ["mojeek", "duckduckgo", "yahoo"]
 _ALL_ENGINES     = ["mojeek", "duckduckgo", "yahoo", "bing"]
 
@@ -211,12 +221,13 @@ def build_engines(query: str) -> dict:
             "warmup_needed": True,
         },
         "yahoo": {
-            "name": "yahoo", "label": "Yahoo Search HTML (own index, no geo-lock)",
+            "name": "yahoo", "label": "Yahoo Search HTML (curl_cffi — TLS impersonation)",
             "url": (f"https://search.yahoo.com/search"
                     f"?p={_qs(query)}&b=1&pz=10&vl=lang_en&fl=1"),
             "method": "GET", "data": None,
-            "headers": YAHOO_HEADERS,
-            "warmup_needed": True,
+            "headers": YAHOO_HEADERS,   # unused on the curl_cffi path; kept for reference
+            "warmup_needed": False,     # curl_cffi succeeds cold — no warmup
+            "transport": "curl_cffi",
         },
         "bing": {
             "name": "bing", "label": "Bing RSS + geo-override headers (en-GB, London coords)",
@@ -411,7 +422,8 @@ def main() -> None:
     print("=" * 70)
 
     print("\n[Pre-flight]")
-    print(f"  brotli : {'OK installed' if brotli_ok else 'MISSING — pip install brotli'}")
+    print(f"  brotli    : {'OK installed' if brotli_ok else 'MISSING — pip install brotli'}")
+    print(f"  curl_cffi : {'OK installed' if CURL_CFFI_AVAILABLE else 'MISSING — pip install curl_cffi (required for Yahoo)'}")
     if len(engines) > 1:
         print("  Warmups: per-engine, run immediately before each request")
 
@@ -476,34 +488,50 @@ def main() -> None:
                 except Exception as e:
                     print(f"FAILED ({e}) — proceeding without warmup")
                 time.sleep(0.3 if args.no_wait else 1.5)
-            elif name == "yahoo":
-                print("  Yahoo warmup...", end=" ", flush=True)
-                try:
-                    # Step 1: yahoo.com – stores cookies in the client session
-                    client.get("https://yahoo.com/")
-                    time.sleep(0.3 if args.no_wait else 1.5)
-                    # Step 2: search.yahoo.com with cookies from step 1
-                    # Update headers for the second request (Referer, Sec-Fetch-Site)
-                    client.headers.update({"Referer": "https://yahoo.com/", "Sec-Fetch-Site": "same-site"})
-                    warm2 = client.get("https://search.yahoo.com/")
-                    print(f"HTTP {warm2.status_code} ({len(dict(warm2.cookies))} cookies)")
-                    # Restore original headers for the search request
-                    client.headers.update(eng["headers"])
-                except Exception as e:
-                    print(f"FAILED ({e}) — proceeding without warmup")
-                time.sleep(0.3 if args.no_wait else 2.0)
+            # Yahoo no longer warms up here — warmup_needed=False routes it
+            # past this entire block. See the curl_cffi branch below.
             # ---- Search ----
         try:
-            t0 = time.monotonic()
-            if eng["method"] == "GET":
-                resp = client.get(eng["url"])
+            if name == "yahoo":
+                # curl_cffi transport: TLS-level Chrome impersonation, no
+                # warmup, minimal headers — matches pipeline/curl_client.py
+                # exactly so this diagnostic reflects real engine behaviour.
+                if not CURL_CFFI_AVAILABLE:
+                    print("  ERROR curl_cffi not installed — Yahoo cannot be tested.")
+                    print("        Run: pip install curl_cffi")
+                    client.close()
+                    summary[name] = 0
+                    continue
+                _curl_headers = {
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                }
+                _impersonate = random.choice(
+                    ["chrome120", "chrome123", "chrome124", "chrome131", "chrome133a"]
+                )
+                t0 = time.monotonic()
+                with CurlSession() as curl_session:
+                    curl_resp = curl_session.get(
+                        eng["url"], headers=_curl_headers,
+                        impersonate=_impersonate, timeout=15.0,
+                    )
+                took = time.monotonic() - t0
+                status = curl_resp.status_code
+                html = curl_resp.text
+                size = len(html)
+                print(f"  [curl_cffi, impersonate={_impersonate}]")
+                client.close()  # unused httpx client for this engine — close cleanly
             else:
-                resp = client.post(eng["url"], data=eng["data"])
-            took = time.monotonic() - t0
-            status = resp.status_code
-            html = resp.text
-            size = len(html)
-            client.close()
+                t0 = time.monotonic()
+                if eng["method"] == "GET":
+                    resp = client.get(eng["url"])
+                else:
+                    resp = client.post(eng["url"], data=eng["data"])
+                took = time.monotonic() - t0
+                status = resp.status_code
+                html = resp.text
+                size = len(html)
+                client.close()
 
             fpath = os.path.join("debug_html", f"{name}_raw.html")
             with open(fpath, "w", encoding="utf-8", errors="replace") as f:
