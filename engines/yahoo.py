@@ -14,6 +14,15 @@ Yahoo uses TWO compTitle anchor patterns in the wild:
   Pattern A (approx 7 results): div.compTitle > a[href*="/RU="]
   Pattern B (approx 3 results): div.compTitle > h3 > a[href*="/RU="]
 The combined CSS selector in _parse_primary() covers both → 10/10 results.
+
+Transport: curl_cffi, not httpx (2026-06-18)
+----------------------------------------------
+httpx returns HTTP 500 on every request to Yahoo, regardless of header
+configuration or warmup. curl_cffi with Chrome TLS impersonation succeeds
+on a single cold GET — no warmup, no cookies, no Referer. Confirmed via
+diagnose_curl_cffi.py live experiment. See pipeline/curl_client.py for
+the full rationale. Mojeek, Bing, and DuckDuckGo are unaffected and
+continue using the shared httpx-based HttpClient.
 """
 
 from __future__ import annotations
@@ -25,6 +34,8 @@ from urllib.parse import quote_plus, unquote, urlparse
 from bs4 import BeautifulSoup
 
 from engine_base import BaseEngine, SearchResult
+from pipeline.curl_client import CurlCffiClient
+from pipeline.http_client import Response
 
 logger = logging.getLogger('lead_engine.yahoo')
 
@@ -82,10 +93,22 @@ class YahooEngine(BaseEngine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._offset = 1
+        # Yahoo-only: route requests through curl_cffi (TLS impersonation)
+        # instead of the shared httpx-based HttpClient. httpx returns HTTP
+        # 500 on every Yahoo request regardless of headers; curl_cffi
+        # succeeds cold, no warmup needed. See pipeline/curl_client.py.
+        self._curl_client = CurlCffiClient()
+
+    def _fetch(self, url: str, data: dict | None = None) -> Response:
+        """Override BaseEngine._fetch() to use curl_cffi instead of the
+        shared self._client. No Referer or warmup needed — confirmed
+        working with a single cold request in live testing."""
+        if data:
+            return self._curl_client.post(url, data)
+        return self._curl_client.get(url)
 
     def _first_page(self) -> dict:
         self._offset = 1
-        self._client.set_headers({'Referer': 'https://search.yahoo.com/'})
         return self._build_request()
 
     def _next_page(self, soup: BeautifulSoup) -> dict:
