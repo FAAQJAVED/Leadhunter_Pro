@@ -8,6 +8,12 @@ beautifulsoup4>=4.12.3
 lxml>=5.1.0
 brotli>=1.1.0
 
+# Yahoo-only transport (2026-06-18): httpx returns HTTP 500 on every Yahoo
+# request regardless of headers/warmup. curl_cffi (Chrome TLS impersonation)
+# succeeds cold. Mojeek/DDG/Bing are unaffected and still use httpx above.
+# See pipeline/curl_client.py and CHANGELOG.md v1.1.3.
+curl_cffi>=0.7.0
+
 # Output
 openpyxl>=3.1.2
 
