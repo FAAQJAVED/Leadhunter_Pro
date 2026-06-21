@@ -67,9 +67,8 @@ _BASE_HDRS = {
 
 _DDG_WARMUP_HDRS   = {**_BASE_HDRS, "Referer": "https://duckduckgo.com/",
                       "Origin": "https://duckduckgo.com"}
-_YAHOO_WARMUP_HDRS = {**_BASE_HDRS,
-                      "Referer":        "https://yahoo.com/",
-                      "Sec-Fetch-Site": "same-site"}
+# _YAHOO_WARMUP_HDRS removed (2026-06-18) — Yahoo no longer warms up via
+# httpx. See _do_engine_warmup() "yahoo" branch and pipeline/curl_client.py.
 
 
 def _do_engine_warmup(engine_name: str, shared_client: HttpClient,
@@ -101,73 +100,15 @@ def _do_engine_warmup(engine_name: str, shared_client: HttpClient,
         return True
 
     elif engine_name == "yahoo":
-        logger.info("[warmup] Yahoo — two-step session warmup (yahoo.com → search.yahoo.com)...")
-        yahoo_warmup_ok = False
-        try:
-            _yahoo_home_hdrs = {**_YAHOO_WARMUP_HDRS, "Referer": ""}
-            resp1 = httpx.get(
-                "https://yahoo.com/",
-                headers={k: v for k, v in _yahoo_home_hdrs.items() if v},
-                timeout=httpx.Timeout(10.0, connect=10, read=20),
-                follow_redirects=True,
-            )
-            shared_client.session.cookies.update(dict(resp1.cookies))
-            logger.info("[warmup] Yahoo home HTTP %d (%d cookies)", resp1.status_code,
-                        len(dict(resp1.cookies)))
-            time.sleep(random.uniform(1.5, 2.5))
-
-            resp = httpx.get(
-                "https://search.yahoo.com/",
-                headers=_YAHOO_WARMUP_HDRS,
-                cookies=dict(resp1.cookies),
-                timeout=httpx.Timeout(10.0, connect=10, read=20),
-                follow_redirects=True,
-            )
-            shared_client.session.cookies.update(dict(resp.cookies))
-            shared_client.set_headers({"Referer": "https://search.yahoo.com/"})
-            logger.info("[warmup] Yahoo search HTTP %d (%d cookies)", resp.status_code,
-                        len(dict(resp.cookies)))
-
-            if resp.status_code == 500:
-                wait = random.uniform(90, 150)
-                logger.warning(
-                    "[warmup] Yahoo HTTP 500 — IP rate-limited. "
-                    "Waiting %.0fs for cooldown before retry...", wait
-                )
-                time.sleep(wait)
-                resp2 = httpx.get(
-                    "https://search.yahoo.com/",
-                    headers=_YAHOO_WARMUP_HDRS,
-                    cookies=dict(resp.cookies),
-                    timeout=httpx.Timeout(15.0, connect=10, read=25),
-                    follow_redirects=True,
-                )
-                shared_client.session.cookies.update(dict(resp2.cookies))
-                logger.info("[warmup] Yahoo retry HTTP %d (%d cookies)",
-                            resp2.status_code, len(dict(resp2.cookies)))
-
-                if resp2.status_code == 500:
-                    logger.warning(
-                        "[warmup] Yahoo blocked after 2 attempts "
-                        "(IP rate-limit active). Skipping Yahoo this run. "
-                        "Wait 10+ minutes then try: python main.py --yahoo --fresh"
-                    )
-                    return False
-                else:
-                    yahoo_warmup_ok = True
-            else:
-                yahoo_warmup_ok = True
-
-        except Exception as exc:
-            logger.warning("[warmup] Yahoo warmup failed: %s — proceeding anyway", exc)
-            yahoo_warmup_ok = False
-
-        if yahoo_warmup_ok:
-            time.sleep(random.uniform(2.0, 3.0))
-            return True
-        else:
-            time.sleep(random.uniform(3.0, 5.0))
-            return True
+        # No warmup needed (2026-06-18). YahooEngine now routes all requests
+        # through curl_cffi (pipeline/curl_client.py) instead of the shared
+        # httpx-based HttpClient. httpx returned HTTP 500 on every Yahoo
+        # request regardless of header config or this two-step warmup;
+        # curl_cffi's Chrome TLS impersonation succeeds on a single cold
+        # request with no session prep. Confirmed via diagnose_curl_cffi.py
+        # live experiment — see CHANGELOG.md.
+        logger.info("[warmup] Yahoo — no warmup needed (curl_cffi transport)")
+        return True
 
     elif engine_name == "mojeek":
         # CRITICAL: Use the shared HttpClient for warmup so that session
