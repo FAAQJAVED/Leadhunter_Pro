@@ -32,9 +32,9 @@ import re
 from urllib.parse import quote_plus, unquote, urlparse
 
 from bs4 import BeautifulSoup
+from pipeline.curl_client import CurlCffiClient
 
 from engine_base import BaseEngine, SearchResult
-from pipeline.curl_client import CurlCffiClient
 from pipeline.http_client import Response
 
 logger = logging.getLogger('lead_engine.yahoo')
